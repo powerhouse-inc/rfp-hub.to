@@ -8,49 +8,65 @@ export interface SubmitResult {
   error?: string
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64)
-}
-
 function buildPreviewDocument(input: SubmitRfpInput): Record<string, unknown> {
   return {
-    type: 'rfp-hub/rfp',
+    type: 'rfp-hub/grant-pool',
     state: {
-      slug: slugify(input.title),
-      title: input.title,
-      summary: input.summary,
-      body: input.body || null,
-      funder: input.funder,
-      funderUrl: input.funderUrl || null,
+      grantSystemRef: null,
+      name: input.name,
+      description: input.description,
+      grantFundingMechanism: input.grantFundingMechanism,
+      isOpen: input.lifecycle === 'OPEN',
+      openDate: input.openDate || null,
+      closeDate: input.closeDate || null,
+      applicationsURI: input.applicationsURI || null,
+      governanceURI: null,
+      attestationIssuersURI: null,
+      requiredCredentials: [],
+      totalGrantPoolSize: [],
+      totalGrantPoolSizeInUSD: input.totalGrantPoolSizeInUSD || null,
+      minGrant: [],
+      maxGrant: [],
+      email: null,
+      image: null,
+      coverImage: null,
+      extensions: null,
+      sameAs: [],
+      code: null,
+      briefingURI: input.briefingURI || null,
+      eligibilityCriteria: input.eligibilityCriteria || null,
+      evaluationCriteria: input.evaluationCriteria || null,
+      contextDocuments: [],
+      reviewers: [],
       categories: input.categories
         .split(',')
         .map((c) => c.trim())
         .filter(Boolean),
-      status: input.status,
-      deadline: input.deadline || null,
-      fundingAmount: input.fundingAmount || null,
-      fundingCurrency: input.fundingCurrency || null,
-      ecosystem: input.ecosystem || null,
-      sourceUrl: input.sourceUrl || null,
-      provenance: {
-        submitter: null, // filled in server-side from the signed bearer token
-        submittedAt: new Date().toISOString(),
-        verificationStatus: 'UNVERIFIED',
-        sourceHash: '', // computed server-side by the duplicate-detection processor
-      },
+      ecosystems: input.ecosystem ? [input.ecosystem] : [],
+      tags: [],
+      lifecycle: input.lifecycle,
+      // submitter is filled in server-side from the signed bearer token
+      submitter: null,
+      publisher: null,
+      lastVerifiedAt: null,
+      verificationMethod: null,
+      verifiedBy: null,
+      // Community submissions start as PENDING; governance decides later.
+      governanceState: 'PENDING',
+      supersedes: null,
+      claimedFromEntry: null,
+      duplicateOf: null,
+      _derivedFunder: input.funder,
+      _derivedFunderUrl: input.funderUrl || null,
     },
   }
 }
 
 /**
- * Attempts to dispatch an `addRfp` action to the reactor. If the document
- * model isn't published yet (or the switchboard is unreachable), returns a
- * preview payload instead so the user sees what *would* have been submitted.
+ * Attempts to dispatch an `addGrantPool` action to the reactor. If the
+ * document model isn't live yet (or the switchboard is unreachable), returns
+ * a preview payload so the user sees the DAOIP-5-shaped submission that
+ * *would* have been dispatched.
  */
 export async function submitRfp(input: SubmitRfpInput): Promise<SubmitResult> {
   const preview = buildPreviewDocument(input)
@@ -75,7 +91,7 @@ export async function submitRfp(input: SubmitRfpInput): Promise<SubmitResult> {
 
     const doc = await reactor.createDocument({
       driveId: DRIVE_ID,
-      type: 'rfp-hub/rfp',
+      type: 'rfp-hub/grant-pool',
       state: (preview as { state: unknown }).state,
     })
     return { ok: true, documentId: doc.id, preview }

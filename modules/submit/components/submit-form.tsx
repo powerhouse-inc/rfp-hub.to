@@ -9,7 +9,7 @@ import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
 import { Textarea } from '@/modules/shared/components/ui/textarea'
-import { RFP_STATUS_OPTIONS } from '@/modules/rfps'
+import { FUNDING_MECHANISM_OPTIONS, LIFECYCLE_OPTIONS } from '@/modules/rfps'
 import { submitRfp, type SubmitResult } from '../dispatch'
 import { submitRfpSchema, type SubmitRfpInput } from '../schema'
 
@@ -21,18 +21,21 @@ export function SubmitForm() {
   const form = useForm<SubmitRfpInput>({
     resolver: zodResolver(submitRfpSchema),
     defaultValues: {
-      status: 'OPEN',
-      categories: '',
-      title: '',
-      summary: '',
+      name: '',
+      description: '',
       funder: '',
       funderUrl: '',
-      deadline: '',
-      fundingAmount: '',
-      fundingCurrency: '',
+      categories: '',
+      grantFundingMechanism: 'REQUEST_FOR_PROPOSAL',
+      lifecycle: 'OPEN',
+      closeDate: '',
+      openDate: '',
+      totalGrantPoolSizeInUSD: '',
       ecosystem: '',
-      sourceUrl: '',
-      body: '',
+      applicationsURI: '',
+      briefingURI: '',
+      eligibilityCriteria: '',
+      evaluationCriteria: '',
     },
   })
 
@@ -57,20 +60,24 @@ export function SubmitForm() {
           <div>
             <p className="mb-1 font-medium text-foreground">Sign in to submit</p>
             <p className="text-foreground/70">
-              RFP submissions are signed with your Renown identity so we can track provenance.
-              Use the &ldquo;Sign in&rdquo; button in the top nav.
+              Submissions are signed with your Renown identity so provenance is tracked on the
+              operation log. Use the &ldquo;Log in&rdquo; button in the top nav.
             </p>
           </div>
         </div>
       ) : null}
 
       <Section title="The basics">
-        <Field label="Title" error={form.formState.errors.title?.message}>
-          <Input {...form.register('title')} placeholder="Round 5 Retro Funding" />
+        <Field label="Name" error={form.formState.errors.name?.message}>
+          <Input {...form.register('name')} placeholder="Round 5 Retro Funding" />
         </Field>
-        <Field label="One-line summary" error={form.formState.errors.summary?.message}>
+        <Field
+          label="Description"
+          error={form.formState.errors.description?.message}
+          hint="One or two sentences. Shown on cards and list."
+        >
           <Textarea
-            {...form.register('summary')}
+            {...form.register('description')}
             rows={3}
             placeholder="Retroactive funding for public goods that improved the Superchain this year."
           />
@@ -79,7 +86,11 @@ export function SubmitForm() {
 
       <Section title="Funder">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Name" error={form.formState.errors.funder?.message}>
+          <Field
+            label="Name"
+            error={form.formState.errors.funder?.message}
+            hint="Proxy until a GrantSystem document is linked."
+          >
             <Input {...form.register('funder')} placeholder="Optimism Foundation" />
           </Field>
           <Field label="Homepage" error={form.formState.errors.funderUrl?.message}>
@@ -97,20 +108,29 @@ export function SubmitForm() {
           <Input {...form.register('categories')} placeholder="Public Goods, Infrastructure" />
         </Field>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Field label="Status">
+          <Field label="Mechanism">
             <select
-              {...form.register('status')}
+              {...form.register('grantFundingMechanism')}
               className="h-9 w-full appearance-none border border-input bg-background px-3 text-sm"
             >
-              {RFP_STATUS_OPTIONS.map((s) => (
+              {FUNDING_MECHANISM_OPTIONS.map((s: string) => (
                 <option key={s} value={s}>
-                  {s}
+                  {s.toLowerCase().replace(/_/g, ' ')}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Deadline">
-            <Input type="date" {...form.register('deadline')} />
+          <Field label="Lifecycle">
+            <select
+              {...form.register('lifecycle')}
+              className="h-9 w-full appearance-none border border-input bg-background px-3 text-sm"
+            >
+              {LIFECYCLE_OPTIONS.map((s: string) => (
+                <option key={s} value={s}>
+                  {s.toLowerCase().replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Ecosystem">
             <Input {...form.register('ecosystem')} placeholder="Ethereum" />
@@ -118,26 +138,51 @@ export function SubmitForm() {
         </div>
       </Section>
 
+      <Section title="Timing">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="Opens">
+            <Input type="date" {...form.register('openDate')} />
+          </Field>
+          <Field label="Closes">
+            <Input type="date" {...form.register('closeDate')} />
+          </Field>
+        </div>
+      </Section>
+
       <Section title="Funding">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Field label="Amount">
-            <Input {...form.register('fundingAmount')} placeholder="1000000" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="Total pool size (USD)">
+            <Input
+              {...form.register('totalGrantPoolSizeInUSD')}
+              placeholder="1000000"
+              inputMode="numeric"
+            />
           </Field>
-          <Field label="Currency">
-            <Input {...form.register('fundingCurrency')} placeholder="USDC" />
-          </Field>
-          <Field label="Source URL">
-            <Input {...form.register('sourceUrl')} placeholder="https://example.com/rfp" />
+          <Field label="Applications URI">
+            <Input
+              {...form.register('applicationsURI')}
+              placeholder="https://example.com/apply"
+            />
           </Field>
         </div>
       </Section>
 
       <Section title="Details (optional)">
-        <Field label="Full description">
+        <Field label="Briefing URI">
+          <Input {...form.register('briefingURI')} placeholder="https://example.com/brief" />
+        </Field>
+        <Field label="Eligibility criteria">
           <Textarea
-            {...form.register('body')}
-            rows={6}
-            placeholder="Scope, deliverables, eligibility criteria, judging rubric…"
+            {...form.register('eligibilityCriteria')}
+            rows={3}
+            placeholder="Who can apply?"
+          />
+        </Field>
+        <Field label="Evaluation criteria">
+          <Textarea
+            {...form.register('evaluationCriteria')}
+            rows={3}
+            placeholder="How are applications judged?"
           />
         </Field>
       </Section>
@@ -152,7 +197,7 @@ export function SubmitForm() {
               <Loader2 className="size-4 animate-spin" /> Submitting…
             </>
           ) : (
-            'Submit RFP'
+            'Submit grant pool'
           )}
         </Button>
       </div>
@@ -212,7 +257,8 @@ function SubmitResultView({
           <div>
             <p className="mb-1 font-medium text-foreground">Submitted</p>
             <p className="text-foreground/70">
-              Document <span className="font-mono">{result.documentId}</span> is now indexed.
+              Document <span className="font-mono">{result.documentId}</span> is indexed and
+              awaiting governance review.
             </p>
           </div>
         </div>
@@ -225,10 +271,10 @@ function SubmitResultView({
           <div>
             <p className="mb-1 font-medium text-foreground">Preview mode</p>
             <p className="text-foreground/70">
-              The RFP document model isn&apos;t live yet — showing the DAOIP-5-compatible payload
-              your submission would produce. Once{' '}
-              <code className="font-mono">rfp-hub-app</code> is deployed, this form dispatches a
-              signed <code className="font-mono">addRfp</code> action to the reactor.
+              The reactor isn&apos;t reachable — showing the GrantPool document your submission
+              would produce. Once a switchboard is live at{' '}
+              <code className="font-mono">NEXT_PUBLIC_SWITCHBOARD_URL</code>, this form dispatches
+              a signed <code className="font-mono">rfp-hub/grant-pool</code> create action.
             </p>
             {result.error ? (
               <p className="mt-2 font-mono text-xs text-muted-foreground">{result.error}</p>
