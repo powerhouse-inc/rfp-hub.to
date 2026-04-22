@@ -3,9 +3,9 @@ import type { CodegenConfig } from '@graphql-codegen/cli'
 // see: https://plainenglish.io/blog/next-js-app-router-graphql-codegen-and-tanstack-query
 
 const config: CodegenConfig = {
-  // Where your GQL schema is located (could also be externally hosted)
-  // TODO: move the URL to the .env file
-  schema: 'https://switchboard.staging.vetra.io/graphql',
+  // Points at the local RFP Hub switchboard. Override with NEXT_PUBLIC_SWITCHBOARD_URL
+  // when running against a deployed instance.
+  schema: process.env.NEXT_PUBLIC_SWITCHBOARD_URL || 'http://localhost:4001/graphql',
   overwrite: true,
   documents: ['./modules/**/*.gql', './modules/**/*.{tsx,ts}', './app/**/*.{tsx,ts}'],
   generates: {

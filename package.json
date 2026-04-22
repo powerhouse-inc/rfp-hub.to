@@ -1,7 +1,8 @@
 {
-  "name": "@powerhousedao/vetra-to",
+  "name": "@powerhousedao/rfp-hub-to",
   "version": "0.1.0",
   "private": true,
+  "description": "Reference frontend for the RFP Hub — the open index of web3 funding opportunities.",
   "scripts": {
     "tsc": "tsc",
     "dev": "next dev --turbopack",
@@ -22,7 +23,6 @@
     "@powerhousedao/reactor": "6.0.0-dev.179",
     "@powerhousedao/reactor-browser": "6.0.0-dev.179",
     "@powerhousedao/shared": "6.0.0-dev.179",
-    "@powerhousedao/vetra-cloud-package": "https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.21.tgz",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
