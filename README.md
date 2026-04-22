@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RFP Hub · Fusion Page
 
-## Getting Started
+> The open, neutral index of web3 funding opportunities.
 
-First, run the development server:
+Reference frontend for the **Ethereum Foundation RFP Hub** — our response to
+[`rfp_hub`](https://esp.ethereum.foundation/applicants/rfp/rfp_hub). This
+repository is one half of the application; the backend lives in
+[`powerhouse-inc/rfp-hub-app`](https://github.com/powerhouse-inc/rfp-hub-app)
+as a Powerhouse package.
+
+Live pages:
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Landing — hero, live stats, latest RFPs, how-it-works, API preview |
+| `/rfps` | Searchable + filterable list (URL-state via `nuqs`) |
+| `/rfps/[id]` | Detail view — DAOIP-5 fields, provenance, raw JSON export |
+| `/publishers` | Funder / publisher directory |
+| `/submit` | Renown-gated submission form |
+| `/api-docs` | Public GraphQL API reference |
+
+## Stack
+
+- Next.js 16 · React 19 · TypeScript · Tailwind 4 · Radix UI
+- `@powerhousedao/reactor-browser` — signed action dispatch
+- `@renown/sdk` — bearer-token identity
+- `@tanstack/react-query` · `zod` · `react-hook-form` · `nuqs`
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Terminal 1 — backend (Powerhouse package)
+git clone https://github.com/powerhouse-inc/rfp-hub-app
+cd rfp-hub-app
+bun install
+ph switchboard         # starts the reactor + GraphQL at :4001
+
+# Terminal 2 — this app
+pnpm install
+pnpm dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without a running switchboard the app still renders — it falls back to a
+bundled sample dataset so reviewers can explore the UX without the full stack.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+NEXT_PUBLIC_SWITCHBOARD_URL=http://localhost:4001/graphql  # default
+NEXT_PUBLIC_RFP_HUB_DRIVE_ID=rfp-hub                       # default
+NEXT_PUBLIC_RENOWN_URL=https://renown.id
+```
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/                       Next.js App Router pages
+  (home)/                  landing
+  rfps/ · rfps/[id]/       list + detail
+  publishers/              directory
+  submit/                  Renown-gated form
+  api-docs/                public API reference
+modules/
+  rfps/                    types, graphql.ts (+ fallback), hooks, components
+  publishers/
+  submit/
+  home/
+  shared/                  client, auth-bridge, Renown provider, UI primitives
+docs/
+  superpowers/specs/       design spec
+  subgraph-proposal/       rfp-hub subgraph we're proposing to liberuum
+  ef-application.md        draft EF application answers
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How the data layer works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Read path** (public, unauthenticated):
+1. Queries hit the `rfp-hub` public subgraph on the switchboard:
+   `rfps(filter, pagination)`, `rfp(id)`, `publishers`, `stats`.
+2. If the subgraph isn't live yet, `modules/rfps/graphql.ts` degrades to
+   the document-model's built-in `Rfp.findDocuments` query and applies
+   filters in-memory.
+3. If nothing is reachable at all, bundled sample data renders so the UX
+   stays explorable.
 
-## Deploy on Vercel
+**Write path** (Renown-signed):
+1. The submit form dispatches an `addRfp` action via
+   `@powerhousedao/reactor-browser` through `modules/shared/client.ts`.
+2. The bearer token comes from `useRenown()` through `AuthBridge` mounted
+   in `app/layout.tsx`.
+3. A processor (proposed in the subgraph draft) computes
+   `sourceHash = keccak256(funder+title+deadline)` for duplicate detection.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Related
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Design spec:** [`docs/superpowers/specs/2026-04-22-rfp-hub-fusion-page-design.md`](./docs/superpowers/specs/2026-04-22-rfp-hub-fusion-page-design.md)
+- **EF application draft:** [`docs/ef-application.md`](./docs/ef-application.md)
+- **Subgraph proposal:** [`docs/subgraph-proposal/`](./docs/subgraph-proposal/)
+- **Backend package:** [`powerhouse-inc/rfp-hub-app`](https://github.com/powerhouse-inc/rfp-hub-app)
+
+## License
+
+AGPL-3.0 · Built by [Powerhouse](https://powerhouse.inc).

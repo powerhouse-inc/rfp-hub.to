@@ -29,6 +29,7 @@ export default defineConfig(
     'postcss.config.mjs',
     'tailwind.config.js',
     'modules/__generated__/**',
+    'docs/subgraph-proposal/**',
     '.next/**',
     'out/**',
     'build/**',

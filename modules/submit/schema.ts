@@ -10,7 +10,7 @@ export const submitRfpSchema = z.object({
   funder: z.string().min(2, 'Who is funding this RFP?'),
   funderUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
   categories: z.string().min(1, 'At least one category helps others find this RFP.'),
-  status: z.enum(RFP_STATUS_OPTIONS as [string, ...string[]]).default('OPEN'),
+  status: z.enum(RFP_STATUS_OPTIONS as [string, ...string[]]),
   deadline: z.string().optional().or(z.literal('')),
   fundingAmount: z.string().optional().or(z.literal('')),
   fundingCurrency: z.string().optional().or(z.literal('')),
