@@ -83,17 +83,32 @@ function RenownLoginGuard() {
 }
 
 /**
- * `AuthBridge` uses `useRenown()`, which subscribes to the same store `Renown`
- * updates. If they mount in the same commit, the SDK can still trigger
- * "Cannot update AuthBridge while rendering Renown" because `useRenown` runs
- * in the same render pass as `Renown`'s init. We only mount `AuthBridge` one
- * frame after the provider decides phase 2 (separate effect commit).
+ * `AuthBridge` uses `useRenown()`, which subscribes to the same store
+ * `<Renown />` updates. Mounting it in the same commit as Renown races with
+ * the SDK's `setRenown(null)` → `setRenown(renown)` sequence and triggers
+ * "Cannot update AuthBridge while rendering Renown".
+ *
+ * Gate on `window.ph.renown` existing — the SDK only populates that slot
+ * after its build + initial login have resolved, so by the time we observe
+ * it, both setState calls have committed and it's safe to subscribe.
  */
 function AuthBridgeDeferred() {
   const [ready, setReady] = useState(false)
   useEffect(() => {
-    const id = setTimeout(() => setReady(true), 0)
-    return () => clearTimeout(id)
+    let cancelled = false
+    const tick = () => {
+      if (cancelled) return
+      const r = (window as unknown as { ph?: { renown?: unknown } }).ph?.renown
+      if (r) {
+        setReady(true)
+        return
+      }
+      window.setTimeout(tick, 50)
+    }
+    tick()
+    return () => {
+      cancelled = true
+    }
   }, [])
   if (!ready) return null
   return <AuthBridge />

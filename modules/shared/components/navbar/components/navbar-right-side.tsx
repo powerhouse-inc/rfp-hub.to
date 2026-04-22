@@ -1,6 +1,6 @@
 'use client'
 
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { openRenown, logout as renownLogout } from '@powerhousedao/reactor-browser'
 import { LogIn, LogOut, Loader2, MoreVertical, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
@@ -26,42 +26,108 @@ function RenownButtonLoading() {
   )
 }
 
+type AuthSnapshot =
+  | { status: 'unauthorized' }
+  | {
+      status: 'authorized'
+      displayName?: string
+      displayAddress?: string
+      profileId?: string
+    }
+
+function truncateAddress(address: string): string {
+  if (address.length <= 13) return address
+  return `${address.slice(0, 7)}...${address.slice(-5)}`
+}
+
+type RenownUser = {
+  address?: string
+  ens?: { name?: string }
+  profile?: { username?: string; documentId?: string }
+}
+
+type RenownInstance = {
+  user?: RenownUser | null
+  status?: string
+  on?: (event: 'user' | 'status', cb: () => void) => () => void
+}
+
+function readAuth(): AuthSnapshot {
+  if (typeof window === 'undefined') return { status: 'unauthorized' }
+  const renown = (window as unknown as { ph?: { renown?: RenownInstance } }).ph?.renown
+  const user = renown?.user
+  if (!user) return { status: 'unauthorized' }
+  const ensName = user.ens?.name
+  const address = user.address
+  return {
+    status: 'authorized',
+    displayName: ensName ?? user.profile?.username,
+    displayAddress: address ? truncateAddress(address) : undefined,
+    profileId: user.profile?.documentId,
+  }
+}
+
 /**
- * Gate that delays mounting `RenownButtonInner` (which subscribes to the
- * Renown store via `useRenownAuth`) until after the first client render.
- * Subscribing inside the same commit pass that `<Renown />` fires its
- * internal `setRenown(null)` side effect triggers a React "setState during
- * another component's render" warning AND can mis-seat the post-redirect
- * `?user=` login attempt (the user ends up having to log in twice).
- *
- * Critically, the inner component is only *rendered* after the gate flips,
- * so the hook is never called during the racy first commit.
+ * Reads Renown auth state via the SDK's underlying DOM events rather than
+ * the `useRenownAuth` hook. `useRenownAuth` subscribes to the store via
+ * `useSyncExternalStore`; the subscription races with `<Renown />` firing
+ * its own `setRenown` during its render, triggering a React "Cannot update
+ * RenownButtonInner while rendering Renown" warning. A plain `useState` +
+ * `addEventListener` combination runs outside the reconciler.
  */
-function RenownButton() {
-  const [mounted, setMounted] = useState(false)
-  // Defer subscribing until after `<Renown />`’s `useRenownInit` has finished the
-  // current turn (avoids React 19 "Cannot update … RenownButtonInner … while
-  // rendering … Renown" when Renown and navbar were siblings).
+function useRenownAuthSafe(): AuthSnapshot {
+  const [auth, setAuth] = useState<AuthSnapshot>(() => readAuth())
   useEffect(() => {
-    let t2 = 0
-    const t1 = window.requestAnimationFrame(() => {
-      t2 = window.requestAnimationFrame(() => setMounted(true))
-    })
+    const refresh = () => setAuth(readAuth())
+    refresh()
+    window.addEventListener('ph:renownUpdated', refresh)
+    let detachUser: (() => void) | undefined
+    let detachStatus: (() => void) | undefined
+    const r = (window as unknown as { ph?: { renown?: RenownInstance } }).ph?.renown
+    if (r?.on) {
+      detachUser = r.on('user', refresh)
+      detachStatus = r.on('status', refresh)
+    }
     return () => {
-      window.cancelAnimationFrame(t1)
-      window.cancelAnimationFrame(t2)
+      window.removeEventListener('ph:renownUpdated', refresh)
+      detachUser?.()
+      detachStatus?.()
     }
   }, [])
-  if (!mounted) return <RenownButtonLoading />
+  return auth
+}
+
+/**
+ * Gate that delays mounting `RenownButtonInner` until `window.ph.renown`
+ * exists. The SDK only writes to that slot after `initRenown` finishes its
+ * async build, so by the time we observe it, all the racy first-render
+ * setState calls have already committed.
+ */
+function RenownButton() {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    const tick = () => {
+      if (cancelled) return
+      const r = (window as unknown as { ph?: { renown?: unknown } }).ph?.renown
+      if (r) {
+        setReady(true)
+        return
+      }
+      window.setTimeout(tick, 50)
+    }
+    tick()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  if (!ready) return <RenownButtonLoading />
   return <RenownButtonInner />
 }
 
 function RenownButtonInner() {
-  const auth = useRenownAuth()
+  const auth = useRenownAuthSafe()
 
-  if (auth.status === 'loading' || auth.status === 'checking') {
-    return <RenownButtonLoading />
-  }
   if (auth.status === 'authorized') {
     return (
       <DropdownMenu>
@@ -76,7 +142,9 @@ function RenownButtonInner() {
           className="bg-accent border-border/50 z-170 w-44 rounded-lg p-1.5"
         >
           <DropdownMenuItem
-            onClick={auth.openProfile}
+            onClick={() => {
+              if (auth.profileId) openRenown(auth.profileId)
+            }}
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
             <User className="h-4 w-4" />
@@ -85,7 +153,7 @@ function RenownButtonInner() {
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
             onClick={() => {
-              void auth.logout()
+              void renownLogout()
             }}
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-red-500 focus:text-red-500"
           >
@@ -97,7 +165,7 @@ function RenownButtonInner() {
     )
   }
   return (
-    <button type="button" onClick={auth.login} className={btnSecondary}>
+    <button type="button" onClick={() => openRenown()} className={btnSecondary}>
       <LogIn className="h-4 w-4" />
       Log in
     </button>
