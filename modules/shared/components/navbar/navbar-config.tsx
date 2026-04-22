@@ -15,14 +15,19 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
         isActive: (currentPath) => currentPath.startsWith('/publishers'),
       },
       {
+        label: 'Governance',
+        href: '/governance',
+        isActive: (currentPath) => currentPath.startsWith('/governance'),
+      },
+      {
+        label: 'Exports',
+        href: '/exports',
+        isActive: (currentPath) => currentPath.startsWith('/exports'),
+      },
+      {
         label: 'Submit',
         href: '/submit',
         isActive: (currentPath) => currentPath.startsWith('/submit'),
-      },
-      {
-        label: 'API',
-        href: '/api-docs',
-        isActive: (currentPath) => currentPath.startsWith('/api-docs'),
       },
     ],
     authComponent: 'loginButton',
