@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react'
 import { useState } from 'react'
+import { ApplicationCard, useApplicationsForPool } from '@/modules/applications'
 import { usePublisherLookup } from '@/modules/publishers'
 import type { GrantPool } from '../types'
 import { LIFECYCLE_LABEL } from '../types'
@@ -67,6 +68,7 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
   const [exportView, setExportView] = useState<ExportView>('raw')
   const lookupPublisher = usePublisherLookup()
   const funderName = lookupPublisher(rfp.grantSystemRef)
+  const applications = useApplicationsForPool(rfp.id)
 
   const exports: Record<ExportView, { label: string; payload: unknown }> = {
     raw: { label: 'Canonical', payload: rfp },
@@ -142,6 +144,22 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
                   </li>
                 ))}
               </ul>
+            </div>
+          ) : null}
+
+          {(applications.data?.length ?? 0) > 0 ? (
+            <div>
+              <h3 className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                Applications
+                <span className="rounded-full bg-foreground/5 px-1.5 py-0.5 text-[10px] text-foreground">
+                  {applications.data?.length ?? 0}
+                </span>
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {applications.data?.slice(0, 6).map((a) => (
+                  <ApplicationCard key={a.id} application={a} />
+                ))}
+              </div>
             </div>
           ) : null}
 
