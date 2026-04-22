@@ -15,7 +15,7 @@ import {
 import ThemeIconLabel from './toogle-theme-label'
 
 const btnSecondary =
-  'bg-accent text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all cursor-pointer'
+  'inline-flex items-center gap-2 border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-foreground/60 cursor-pointer'
 
 function RenownButtonLoading() {
   return (
