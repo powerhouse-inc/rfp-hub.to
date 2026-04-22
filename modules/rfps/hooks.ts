@@ -2,9 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { fetchHubStats, fetchRfp, fetchRfps } from './graphql'
-import type { RfpFilter } from './types'
+import type { GrantPoolFilter } from './types'
 
-export function useRfps(filter: RfpFilter, limit = 20, cursor: string | null = null) {
+export function useRfps(filter: GrantPoolFilter, limit = 20, cursor: string | null = null) {
   return useQuery({
     queryKey: ['rfps', filter, limit, cursor],
     queryFn: () => fetchRfps(filter, limit, cursor),

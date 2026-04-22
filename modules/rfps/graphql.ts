@@ -1,186 +1,169 @@
 import { gql } from '@/modules/shared/client'
-import { SAMPLE_RFPS } from './sample-data'
-import type { HubStats, Rfp, RfpFilter, RfpPage } from './types'
+import { SAMPLE_POOLS } from './sample-data'
+import type {
+  GrantPool,
+  GrantPoolFilter,
+  GrantPoolPage,
+  HubStats,
+} from './types'
 
-const RFP_FIELDS = `
-  id slug title summary body funder funderUrl categories status deadline
-  fundingAmount fundingCurrency ecosystem sourceUrl
-  provenance { submitter submittedAt verificationStatus sourceHash }
-  createdAt updatedAt
+// All fields the UI needs to render a GrantPool card + detail. Keep this in
+// sync with the GrantPoolState type defined in liberuum's document model
+// (rfp-hub-app/document-models/grant-pool).
+const POOL_STATE_FIELDS = `
+  grantSystemRef name description grantFundingMechanism
+  isOpen openDate closeDate
+  applicationsURI governanceURI attestationIssuersURI
+  requiredCredentials
+  totalGrantPoolSize { id amount }
+  totalGrantPoolSizeInUSD
+  minGrant { id amount }
+  maxGrant { id amount }
+  email image coverImage extensions
+  sameAs
+  code briefingURI eligibilityCriteria evaluationCriteria
+  contextDocuments { id name url }
+  reviewers { id did scope reviewerType name }
+  categories ecosystems tags
+  lifecycle
+  submitter { type identifier submittedAt }
+  publisher { identifier publishedAt }
+  lastVerifiedAt verificationMethod verifiedBy
+  governanceState
+  supersedes claimedFromEntry duplicateOf
 `
 
-/** Fetch a paginated, filterable list of RFPs from the public subgraph. */
-export async function fetchRfps(
-  filter: RfpFilter = {},
-  limit = 20,
-  cursor: string | null = null,
-): Promise<RfpPage> {
+type Namespaced<T> = { GrantPool: T }
+
+interface RawListItem {
+  id: string
+  state: { global: Omit<GrantPool, 'id' | 'createdAt' | 'updatedAt'> }
+}
+
+interface RawDocument {
+  id: string
+  createdAtUtcIso: string
+  lastModifiedAtUtcIso: string
+  state: { global: Omit<GrantPool, 'id' | 'createdAt' | 'updatedAt'> }
+}
+
+function mapListItem(raw: RawListItem): GrantPool {
+  return {
+    id: raw.id,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...raw.state.global,
+  }
+}
+
+function mapDocument(raw: RawDocument): GrantPool {
+  return {
+    id: raw.id,
+    createdAt: raw.createdAtUtcIso,
+    updatedAt: raw.lastModifiedAtUtcIso,
+    ...raw.state.global,
+  }
+}
+
+/**
+ * Fetch the full list of GrantPool documents from the document-model's
+ * auto-generated GraphQL namespace. The public `rfp-hub` aggregation subgraph
+ * is planned but not yet live in liberuum's package; once it lands, this
+ * module gets a server-side filter/pagination path.
+ */
+async function fetchAllPools(): Promise<GrantPool[]> {
   try {
-    const data = await gql<{ rfps: RfpPage }>(
-      `query ($filter: RfpFilter, $pagination: Pagination) {
-        rfps(filter: $filter, pagination: $pagination) {
-          items { ${RFP_FIELDS} }
-          nextCursor
-          total
+    const data = await gql<
+      Namespaced<{ findDocuments: { items: RawListItem[] } }>
+    >(
+      `query {
+        GrantPool {
+          findDocuments {
+            items { id state { global { ${POOL_STATE_FIELDS} } } }
+          }
         }
       }`,
-      { filter, pagination: { limit, cursor } },
     )
-    return data.rfps
-  } catch (err) {
-    if (isSchemaMissing(err)) return fallbackFetchRfps(filter, limit, cursor)
-    throw err
+    return data.GrantPool.findDocuments.items.map(mapListItem)
+  } catch {
+    // No switchboard reachable — fall back to bundled sample data so the UI
+    // stays explorable for reviewers.
+    return SAMPLE_POOLS
   }
 }
 
-/** Fetch a single RFP by its OID. */
-export async function fetchRfp(id: string): Promise<Rfp | null> {
-  try {
-    const data = await gql<{ rfp: Rfp | null }>(
-      `query ($id: OID!) { rfp(id: $id) { ${RFP_FIELDS} } }`,
-      { id },
-    )
-    return data.rfp
-  } catch (err) {
-    if (isSchemaMissing(err)) return fallbackFetchRfp(id)
-    throw err
-  }
-}
-
-export async function fetchRfpBySlug(slug: string): Promise<Rfp | null> {
-  try {
-    const data = await gql<{ rfpBySlug: Rfp | null }>(
-      `query ($slug: String!) { rfpBySlug(slug: $slug) { ${RFP_FIELDS} } }`,
-      { slug },
-    )
-    return data.rfpBySlug
-  } catch (err) {
-    if (isSchemaMissing(err)) return null
-    throw err
-  }
-}
-
-export async function fetchHubStats(): Promise<HubStats> {
-  try {
-    const data = await gql<{ stats: HubStats }>(
-      `query { stats { totalRfps openRfps totalFunders updatedAt } }`,
-    )
-    return data.stats
-  } catch (err) {
-    if (isSchemaMissing(err)) return fallbackStats()
-    throw err
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Fallback: use the document-model's built-in queries when the public subgraph
-// isn't live yet. Loses server-side filter/pagination; applies them in-memory.
-// ---------------------------------------------------------------------------
-
-function isSchemaMissing(err: unknown): boolean {
-  const msg = (err as Error)?.message ?? ''
-  return /Cannot query field|Unknown type|does not exist on type Query/i.test(msg)
-}
-
-async function fallbackFetchRfps(
-  filter: RfpFilter,
-  limit: number,
-  cursor: string | null,
-): Promise<RfpPage> {
-  const all = await fallbackListAll()
-  const filtered = all.filter((r) => matches(r, filter))
-  filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  const startIdx = cursor ? Math.max(0, filtered.findIndex((r) => r.id === cursor) + 1) : 0
+export async function fetchRfps(
+  filter: GrantPoolFilter = {},
+  limit = 20,
+  cursor: string | null = null,
+): Promise<GrantPoolPage> {
+  const all = await fetchAllPools()
+  const filtered = all.filter((p) => matchesFilter(p, filter))
+  filtered.sort((a, b) => {
+    // Deterministic order: deadline asc (null last), then updatedAt desc.
+    const ax = a.closeDate ?? '￿'
+    const bx = b.closeDate ?? '￿'
+    if (ax !== bx) return ax.localeCompare(bx)
+    return b.updatedAt.localeCompare(a.updatedAt)
+  })
+  const startIdx = cursor
+    ? Math.max(0, filtered.findIndex((p) => p.id === cursor) + 1)
+    : 0
   const items = filtered.slice(startIdx, startIdx + limit)
   const nextCursor = items.length === limit ? items[items.length - 1].id : null
   return { items, nextCursor, total: filtered.length }
 }
 
-async function fallbackFetchRfp(id: string): Promise<Rfp | null> {
-  const all = await fallbackListAll()
-  return all.find((r) => r.id === id) ?? null
-}
-
-async function fallbackListAll(): Promise<Rfp[]> {
+export async function fetchRfp(id: string): Promise<GrantPool | null> {
   try {
-    const data = await gql<{
-      Rfp: {
-        findDocuments: { items: Array<{ id: string; state: { global: unknown } }> }
-      }
-    }>(
-      `query {
-        Rfp {
-          findDocuments {
-            items { id state { global } }
+    const data = await gql<
+      Namespaced<{ document: { document: RawDocument } | null }>
+    >(
+      `query ($id: String!) {
+        GrantPool {
+          document(identifier: $id) {
+            document {
+              id createdAtUtcIso lastModifiedAtUtcIso
+              state { global { ${POOL_STATE_FIELDS} } }
+            }
           }
         }
       }`,
+      { id },
     )
-    return data.Rfp.findDocuments.items.map((doc) =>
-      projectFromDocument(doc.id, doc.state.global as Record<string, unknown>),
-    )
+    const raw = data.GrantPool.document?.document
+    return raw ? mapDocument(raw) : null
   } catch {
-    // Neither subgraph nor document model is reachable — return seed data
-    // so reviewers can see the experience without running the backend.
-    return SAMPLE_RFPS
+    // Fallback: look it up in the list (including sample data).
+    const all = await fetchAllPools()
+    return all.find((p) => p.id === id) ?? null
   }
 }
 
-async function fallbackStats(): Promise<HubStats> {
-  const all = await fallbackListAll()
-  const funders = new Set(all.map((r) => r.funder.toLowerCase()).filter(Boolean))
+export async function fetchHubStats(): Promise<HubStats> {
+  const all = await fetchAllPools()
+  const systems = new Set(all.map((p) => p.grantSystemRef).filter(Boolean) as string[])
   return {
-    totalRfps: all.length,
-    openRfps: all.filter((r) => r.status === 'OPEN').length,
-    totalFunders: funders.size,
+    totalPools: all.length,
+    openPools: all.filter((p) => p.lifecycle === 'OPEN' || p.lifecycle === 'UPCOMING').length,
+    totalGrantSystems: systems.size,
     updatedAt: new Date().toISOString(),
   }
 }
 
-function projectFromDocument(id: string, raw: Record<string, unknown>): Rfp {
-  const s = raw ?? {}
-  const prov = (s.provenance as Record<string, unknown> | undefined) ?? {}
-  return {
-    id,
-    slug: (s.slug as string) ?? id,
-    title: (s.title as string) ?? '',
-    summary: (s.summary as string) ?? '',
-    body: (s.body as string) ?? null,
-    funder: (s.funder as string) ?? '',
-    funderUrl: (s.funderUrl as string) ?? null,
-    categories: (s.categories as string[]) ?? [],
-    status: ((s.status as string) ?? 'UPCOMING') as Rfp['status'],
-    deadline: (s.deadline as string) ?? null,
-    fundingAmount: (s.fundingAmount as string) ?? null,
-    fundingCurrency: (s.fundingCurrency as string) ?? null,
-    ecosystem: (s.ecosystem as string) ?? null,
-    sourceUrl: (s.sourceUrl as string) ?? null,
-    provenance: {
-      submitter: (prov.submitter as string) ?? null,
-      submittedAt: (prov.submittedAt as string) ?? new Date().toISOString(),
-      verificationStatus:
-        ((prov.verificationStatus as string) ?? 'UNVERIFIED') as Rfp['provenance']['verificationStatus'],
-      sourceHash: (prov.sourceHash as string) ?? '',
-    },
-    createdAt: (s.createdAt as string) ?? new Date().toISOString(),
-    updatedAt: (s.updatedAt as string) ?? new Date().toISOString(),
-  }
-}
-
-function matches(rfp: Rfp, f: RfpFilter): boolean {
-  if (f.funder && rfp.funder.toLowerCase() !== f.funder.toLowerCase()) return false
-  if (
-    f.category &&
-    !rfp.categories.map((c) => c.toLowerCase()).includes(f.category.toLowerCase())
-  )
+function matchesFilter(p: GrantPool, f: GrantPoolFilter): boolean {
+  if (f.grantSystemRef && p.grantSystemRef !== f.grantSystemRef) return false
+  if (f.grantFundingMechanism && p.grantFundingMechanism !== f.grantFundingMechanism) return false
+  if (f.lifecycle && p.lifecycle !== f.lifecycle) return false
+  if (f.governanceState && p.governanceState !== f.governanceState) return false
+  if (f.ecosystem && !p.ecosystems.includes(f.ecosystem)) return false
+  if (f.category && !p.categories.map((c) => c.toLowerCase()).includes(f.category.toLowerCase()))
     return false
-  if (f.status && rfp.status !== f.status) return false
-  if (f.ecosystem && rfp.ecosystem !== f.ecosystem) return false
-  if (f.deadlineBefore && rfp.deadline && rfp.deadline > f.deadlineBefore) return false
-  if (f.deadlineAfter && rfp.deadline && rfp.deadline < f.deadlineAfter) return false
+  if (f.closeDateBefore && p.closeDate && p.closeDate > f.closeDateBefore) return false
+  if (f.closeDateAfter && p.closeDate && p.closeDate < f.closeDateAfter) return false
   if (f.search) {
     const q = f.search.toLowerCase()
-    const hay = `${rfp.title} ${rfp.summary} ${rfp.funder} ${rfp.categories.join(' ')}`.toLowerCase()
+    const hay = `${p.name ?? ''} ${p.description ?? ''} ${p.categories.join(' ')} ${p.ecosystems.join(' ')} ${p.tags.join(' ')}`.toLowerCase()
     if (!hay.includes(q)) return false
   }
   return true
