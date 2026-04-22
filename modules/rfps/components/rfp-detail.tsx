@@ -1,11 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, Calendar, ExternalLink, Hash, Shield, User } from 'lucide-react'
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Hash,
+  Shield,
+  User,
+} from 'lucide-react'
 import { useState } from 'react'
-import type { Rfp } from '../types'
+import type { GrantPool } from '../types'
+import { LIFECYCLE_LABEL } from '../types'
 import { toDaoip5, toSchemaOrgGrant } from '../jsonld'
 import { RfpStatusBadge } from './rfp-status-badge'
+
+type ExportView = 'raw' | 'daoip5' | 'schemaOrg'
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
@@ -16,18 +28,40 @@ function formatDate(iso: string | null): string {
   })
 }
 
-function formatAmount(amount: string | null, currency: string | null): string {
-  if (!amount) return '—'
-  const n = Number(amount)
-  if (Number.isNaN(n)) return `${amount}${currency ? ` ${currency}` : ''}`
-  return `${new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 2,
-  }).format(n)}${currency ? ` ${currency}` : ''}`
+function formatAmounts(pool: GrantPool): string {
+  if (pool.totalGrantPoolSizeInUSD) {
+    const n = Number(pool.totalGrantPoolSizeInUSD)
+    if (!Number.isNaN(n)) {
+      return `$${new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n)} USD`
+    }
+  }
+  if (pool.totalGrantPoolSize.length > 0) {
+    return pool.totalGrantPoolSize
+      .map((a) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(Number(a.amount)))
+      .join(' / ')
+  }
+  return '—'
 }
 
-type ExportView = 'raw' | 'daoip5' | 'schemaOrg'
+function formatMechanism(m: GrantPool['grantFundingMechanism']): string {
+  if (!m) return '—'
+  return m
+    .toLowerCase()
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
 
-export function RfpDetail({ rfp }: { rfp: Rfp }) {
+function formatIdentifier(id: string | null | undefined): string {
+  if (!id) return '—'
+  if (id.startsWith('did:ethr:') && id.length > 20) {
+    const addr = id.slice('did:ethr:'.length)
+    return `did:ethr:${addr.slice(0, 6)}…${addr.slice(-4)}`
+  }
+  return id
+}
+
+export function RfpDetail({ rfp }: { rfp: GrantPool }) {
   const [showJson, setShowJson] = useState(false)
   const [exportView, setExportView] = useState<ExportView>('raw')
 
@@ -36,54 +70,78 @@ export function RfpDetail({ rfp }: { rfp: Rfp }) {
     daoip5: { label: 'DAOIP-5 GrantPool', payload: toDaoip5(rfp) },
     schemaOrg: { label: 'schema.org/MonetaryGrant', payload: toSchemaOrgGrant(rfp) },
   }
+
+  const verified = rfp.governanceState === 'APPROVED'
+
   return (
     <article className="mx-auto max-w-4xl px-6 py-12">
       <Link
         href="/rfps"
         className="mb-6 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" strokeWidth={1.5} /> Back to all RFPs
+        <ArrowLeft className="size-3.5" strokeWidth={1.5} /> Back to all grants
       </Link>
 
       <header className="mb-10 border-b border-border pb-8">
         <div className="mb-4 flex items-center gap-3">
-          <RfpStatusBadge status={rfp.status} />
-          {rfp.provenance.verificationStatus === 'VERIFIED' ? (
+          <RfpStatusBadge lifecycle={rfp.lifecycle} />
+          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            {formatMechanism(rfp.grantFundingMechanism)}
+          </span>
+          {verified ? (
             <span className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider text-[var(--accent)]">
-              <Shield className="size-3" strokeWidth={2} /> Verified
+              <CheckCircle2 className="size-3" strokeWidth={2} /> Approved
             </span>
           ) : null}
         </div>
         <h1 className="mb-3 text-3xl font-medium leading-tight tracking-tight md:text-4xl">
-          {rfp.title}
+          {rfp.name ?? 'Untitled grant pool'}
         </h1>
-        <p className="max-w-2xl text-lg text-foreground/70">{rfp.summary}</p>
+        {rfp.description ? (
+          <p className="max-w-2xl text-lg text-foreground/70">{rfp.description}</p>
+        ) : null}
       </header>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_18rem]">
         <section className="space-y-8">
-          {rfp.body ? (
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap leading-relaxed text-foreground/80">
-              {rfp.body}
-            </div>
+          {rfp.eligibilityCriteria ? (
+            <CriteriaBlock title="Eligibility" body={rfp.eligibilityCriteria} />
           ) : null}
+          {rfp.evaluationCriteria ? (
+            <CriteriaBlock title="Evaluation" body={rfp.evaluationCriteria} />
+          ) : null}
+
           {rfp.categories.length > 0 ? (
+            <TagBlock title="Categories" tags={rfp.categories} />
+          ) : null}
+          {rfp.tags.length > 0 ? <TagBlock title="Tags" tags={rfp.tags} /> : null}
+          {rfp.ecosystems.length > 0 ? (
+            <TagBlock title="Ecosystems" tags={rfp.ecosystems} />
+          ) : null}
+
+          {rfp.contextDocuments.length > 0 ? (
             <div>
               <h3 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                Categories
+                Context
               </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {rfp.categories.map((c) => (
-                  <span
-                    key={c}
-                    className="border border-border px-2 py-1 font-mono text-xs text-foreground/80"
-                  >
-                    {c}
-                  </span>
+              <ul className="space-y-1.5">
+                {rfp.contextDocuments.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      href={d.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-foreground/80 hover:text-foreground"
+                    >
+                      <FileText className="size-3.5" strokeWidth={1.5} /> {d.name}
+                      <ExternalLink className="size-3" strokeWidth={1.5} />
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           ) : null}
+
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-3">
               <button
@@ -121,38 +179,59 @@ export function RfpDetail({ rfp }: { rfp: Rfp }) {
         </section>
 
         <aside className="space-y-6 border-l border-border pl-6 text-sm">
-          <MetaRow icon={<Calendar className="size-3.5" strokeWidth={1.5} />} label="Deadline">
-            {formatDate(rfp.deadline)}
+          <MetaRow icon={<Calendar className="size-3.5" strokeWidth={1.5} />} label="Opens">
+            {formatDate(rfp.openDate)}
           </MetaRow>
-          <MetaRow label="Funder">
-            {rfp.funderUrl ? (
+          <MetaRow icon={<Calendar className="size-3.5" strokeWidth={1.5} />} label="Closes">
+            {formatDate(rfp.closeDate)}
+          </MetaRow>
+          <MetaRow label="Mechanism">{formatMechanism(rfp.grantFundingMechanism)}</MetaRow>
+          <MetaRow label="Pool size">
+            <span className="font-mono">{formatAmounts(rfp)}</span>
+          </MetaRow>
+          {rfp.grantSystemRef ? (
+            <MetaRow label="Funder">
               <Link
-                href={rfp.funderUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-foreground"
+                href={`/publishers?id=${encodeURIComponent(rfp.grantSystemRef)}`}
+                className="font-mono text-xs break-all hover:text-foreground"
               >
-                {rfp.funder}
-                <ExternalLink className="size-3" strokeWidth={1.5} />
+                {formatIdentifier(rfp.grantSystemRef)}
               </Link>
-            ) : (
-              rfp.funder
-            )}
-          </MetaRow>
-          <MetaRow label="Funding">
-            <span className="font-mono">{formatAmount(rfp.fundingAmount, rfp.fundingCurrency)}</span>
-          </MetaRow>
-          <MetaRow label="Ecosystem">{rfp.ecosystem ?? '—'}</MetaRow>
-          {rfp.sourceUrl ? (
-            <MetaRow label="Source">
+            </MetaRow>
+          ) : null}
+          {rfp.applicationsURI ? (
+            <MetaRow label="Applications">
               <Link
-                href={rfp.sourceUrl}
+                href={rfp.applicationsURI}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 break-all font-mono text-xs hover:text-foreground"
               >
-                {rfp.sourceUrl}
+                {rfp.applicationsURI}
                 <ExternalLink className="size-3 flex-shrink-0" strokeWidth={1.5} />
+              </Link>
+            </MetaRow>
+          ) : null}
+          {rfp.briefingURI ? (
+            <MetaRow label="Briefing">
+              <Link
+                href={rfp.briefingURI}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 break-all font-mono text-xs hover:text-foreground"
+              >
+                {rfp.briefingURI}
+                <ExternalLink className="size-3 flex-shrink-0" strokeWidth={1.5} />
+              </Link>
+            </MetaRow>
+          ) : null}
+          {rfp.email ? (
+            <MetaRow label="Contact">
+              <Link
+                href={`mailto:${rfp.email}`}
+                className="font-mono text-xs hover:text-foreground"
+              >
+                {rfp.email}
               </Link>
             </MetaRow>
           ) : null}
@@ -162,23 +241,35 @@ export function RfpDetail({ rfp }: { rfp: Rfp }) {
             </h4>
             <div className="space-y-2.5 text-xs">
               <MetaRow icon={<User className="size-3" strokeWidth={1.5} />} label="Submitter">
-                <span className="font-mono">
-                  {rfp.provenance.submitter
-                    ? `${rfp.provenance.submitter.slice(0, 6)}…${rfp.provenance.submitter.slice(-4)}`
-                    : 'system'}
-                </span>
+                {rfp.submitter ? (
+                  <>
+                    <span className="font-mono">{formatIdentifier(rfp.submitter.identifier)}</span>
+                    <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {rfp.submitter.type}
+                    </span>
+                  </>
+                ) : (
+                  '—'
+                )}
               </MetaRow>
               <MetaRow icon={<Calendar className="size-3" strokeWidth={1.5} />} label="Submitted">
-                {formatDate(rfp.provenance.submittedAt)}
+                {formatDate(rfp.submitter?.submittedAt ?? null)}
               </MetaRow>
-              <MetaRow icon={<Shield className="size-3" strokeWidth={1.5} />} label="Status">
-                {rfp.provenance.verificationStatus}
+              <MetaRow icon={<Shield className="size-3" strokeWidth={1.5} />} label="Governance">
+                <span className="font-mono text-[10px] uppercase tracking-wider">
+                  {rfp.governanceState}
+                </span>
               </MetaRow>
-              {rfp.provenance.sourceHash && rfp.provenance.sourceHash !== 'seed' ? (
-                <MetaRow icon={<Hash className="size-3" strokeWidth={1.5} />} label="Source hash">
-                  <span className="font-mono text-[10px] break-all">
-                    {rfp.provenance.sourceHash}
+              {rfp.verificationMethod ? (
+                <MetaRow icon={<Shield className="size-3" strokeWidth={1.5} />} label="Verified via">
+                  <span className="font-mono text-[10px] uppercase tracking-wider">
+                    {rfp.verificationMethod}
                   </span>
+                </MetaRow>
+              ) : null}
+              {rfp.duplicateOf ? (
+                <MetaRow icon={<Hash className="size-3" strokeWidth={1.5} />} label="Duplicate of">
+                  <span className="font-mono text-[10px] break-all">{rfp.duplicateOf}</span>
                 </MetaRow>
               ) : null}
             </div>
@@ -208,3 +299,34 @@ function MetaRow({
     </div>
   )
 }
+
+function TagBlock({ title, tags }: { title: string; tags: string[] }) {
+  return (
+    <div>
+      <h3 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h3>
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((t) => (
+          <span key={t} className="border border-border px-2 py-1 font-mono text-xs text-foreground/80">
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CriteriaBlock({ title, body }: { title: string; body: string }) {
+  return (
+    <div>
+      <h3 className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h3>
+      <p className="whitespace-pre-wrap leading-relaxed text-foreground/80">{body}</p>
+    </div>
+  )
+}
+
+// Keeps label mapping used above alive for exhaustive lifecycle coverage.
+void LIFECYCLE_LABEL
