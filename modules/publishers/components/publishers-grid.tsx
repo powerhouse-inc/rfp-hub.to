@@ -57,8 +57,12 @@ export function PublishersGrid() {
           {data.map((p) => {
             const homepage = resolveHomepage(p)
             const verified = p.verificationState === 'VERIFIED'
-            const card = (
-              <div className="group flex h-full flex-col border border-border bg-background p-5 transition-colors hover:border-foreground/40">
+            return (
+              <Link
+                key={p.id}
+                href={`/publishers/${p.id}`}
+                className="group flex h-full flex-col border border-border bg-background p-5 transition-colors hover:border-foreground/40"
+              >
                 <div className="mb-3 flex items-center justify-between">
                   <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                     {p.poolCount ?? 0} pool{p.poolCount === 1 ? '' : 's'}
@@ -83,22 +87,7 @@ export function PublishersGrid() {
                     <ExternalLink className="size-3" strokeWidth={1.5} />
                   </span>
                 ) : null}
-              </div>
-            )
-            return homepage ? (
-              <Link
-                key={p.id}
-                href={homepage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block h-full"
-              >
-                {card}
               </Link>
-            ) : (
-              <div key={p.id} className="h-full">
-                {card}
-              </div>
             )
           })}
         </div>

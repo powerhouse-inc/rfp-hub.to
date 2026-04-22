@@ -132,6 +132,54 @@ function toIsoDateTime(v: unknown): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString()
 }
 
+/**
+ * Lenient timestamp parser for DAOIP-5 applications. The canonical format is
+ * ISO 8601, but some funders (e.g. clrfund) emit `MM/DD/YYYYTHH:MM:SSZ`
+ * which Node's `new Date()` rejects as NaN. Normalize that to ISO first.
+ */
+function parseFlexibleTimestamp(raw: unknown): number {
+  if (typeof raw !== 'string') return NaN
+  const s = raw.trim()
+  if (!s) return NaN
+  // Match MM/DD/YYYY(...) and reshape to YYYY-MM-DD(...)
+  const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(.*)$/)
+  if (slash) {
+    const [, mm, dd, yyyy, rest] = slash
+    const iso = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}${rest || ''}`
+    return new Date(iso).getTime()
+  }
+  return new Date(s).getTime()
+}
+
+/**
+ * DAOIP-5 sources rarely fill `closeDate` on the GrantPool itself — but the
+ * pool's applications_uri.json usually has per-application `createdAt`
+ * timestamps. The latest of those is a reasonable proxy for when the pool
+ * closed (applications stop arriving after close). Returns null if the URI
+ * isn't reachable or has no dated applications.
+ */
+async function deriveCloseDateFromApplications(uri: string): Promise<string | null> {
+  try {
+    const res = await fetch(uri)
+    if (!res.ok) return null
+    const body = (await res.json()) as {
+      grant_pools?: Array<{ applications?: Array<{ createdAt?: string }> }>
+      grantApplications?: Array<{ createdAt?: string }>
+    }
+    const apps =
+      body.grant_pools?.[0]?.applications ??
+      body.grantApplications ??
+      []
+    const stamps = apps
+      .map((a) => parseFlexibleTimestamp(a.createdAt))
+      .filter((n) => !Number.isNaN(n))
+    if (stamps.length === 0) return null
+    return new Date(Math.max(...stamps)).toISOString()
+  } catch {
+    return null
+  }
+}
+
 function inferEcosystem(slug: string): string {
   const map: Record<string, string> = {
     optimism: 'Optimism',
@@ -190,6 +238,15 @@ async function createGrantPool(
   grantSystemRef: string,
   slug: string,
 ): Promise<string> {
+  // Prefer the pool's declared closeDate. Fall back to the max application
+  // createdAt when we have an applications_uri — DAOIP-5 rarely fills
+  // closeDate but the applications almost always carry timestamps.
+  let closeDate = toIsoDateTime(pool.closeDate)
+  if (!closeDate && pool.applicationsURI) {
+    const url = toValidUrl(pool.applicationsURI)
+    if (url) closeDate = await deriveCloseDateFromApplications(url)
+  }
+
   const data = (await gql(
     '/graphql/grant-pool',
     `mutation Create($name: String!, $initialState: GrantPool_InitialStateInput) {
@@ -207,7 +264,7 @@ async function createGrantPool(
             inferMechanism(String(pool.name ?? ''), pool.description),
           isOpen: toBool(pool.isOpen),
           openDate: null,
-          closeDate: toIsoDateTime(pool.closeDate),
+          closeDate,
           applicationsURI: toValidUrl(pool.applicationsURI),
           governanceURI: toValidUrl(pool.governanceURI),
           attestationIssuersURI: null,
@@ -232,7 +289,7 @@ async function createGrantPool(
           categories: [],
           ecosystems: [inferEcosystem(slug)],
           tags: ['daoip-5', slug],
-          lifecycle: inferLifecycle(toBool(pool.isOpen), toIsoDateTime(pool.closeDate)),
+          lifecycle: inferLifecycle(toBool(pool.isOpen), closeDate),
           submitter: {
             type: 'AUTOMATION',
             identifier: 'daoip5-importer',
