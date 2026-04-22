@@ -1,5 +1,6 @@
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
+import Script from 'next/script'
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
@@ -39,24 +40,21 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.__ENV=${JSON.stringify({
-              NEXT_PUBLIC_SWITCHBOARD_URL:
-                process.env.SWITCHBOARD_URL ||
-                process.env.GRAPHQL_ENDPOINT ||
-                process.env.NEXT_PUBLIC_SWITCHBOARD_URL ||
-                '',
-              NEXT_PUBLIC_RFP_HUB_DRIVE_ID:
-                process.env.RFP_HUB_DRIVE_ID || process.env.NEXT_PUBLIC_RFP_HUB_DRIVE_ID || '',
-              NEXT_PUBLIC_RENOWN_URL:
-                process.env.RENOWN_URL || process.env.NEXT_PUBLIC_RENOWN_URL || '',
-            })}`,
-          }}
-        />
-      </head>
       <body className={`${inter.variable} ${mono.variable} bg-background antialiased`}>
+        <Script
+          id="runtime-env"
+          strategy="beforeInteractive"
+        >{`window.__ENV=${JSON.stringify({
+          NEXT_PUBLIC_SWITCHBOARD_URL:
+            process.env.SWITCHBOARD_URL ||
+            process.env.GRAPHQL_ENDPOINT ||
+            process.env.NEXT_PUBLIC_SWITCHBOARD_URL ||
+            '',
+          NEXT_PUBLIC_RFP_HUB_DRIVE_ID:
+            process.env.RFP_HUB_DRIVE_ID || process.env.NEXT_PUBLIC_RFP_HUB_DRIVE_ID || '',
+          NEXT_PUBLIC_RENOWN_URL:
+            process.env.RENOWN_URL || process.env.NEXT_PUBLIC_RENOWN_URL || '',
+        })}`}</Script>
         <NuqsAdapter>
           <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
             <QueryClientProvider>
