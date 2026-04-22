@@ -124,8 +124,7 @@ function LatestRfps() {
           <div>
             <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">What&apos;s open right now</h2>
             <p className="max-w-xl text-foreground/70">
-              Live from the reactor. Nothing mocked. Click a card for the full brief, deadline
-              and contact.
+              Click a card for the full brief, deadline and contact.
             </p>
           </div>
           <Link
@@ -160,7 +159,7 @@ function HowItWorks() {
       icon: Database,
       title: 'One schema for every grant',
       body:
-        'Grants look the same whether they come from Gitcoin, Optimism, or Stellar — same fields, same shape. We follow DAOstar&apos;s DAOIP-5 spec and also emit schema.org/Grant so Google indexes them properly.',
+        "Grants look the same whether they come from Gitcoin, Optimism, or Stellar — same fields, same shape. We follow DAOstar's DAOIP-5 spec and also emit schema.org/Grant so Google indexes them properly.",
     },
     {
       icon: GitBranch,
