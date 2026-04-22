@@ -2,7 +2,6 @@
 
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { LogIn, LogOut, Loader2, MoreVertical, User } from 'lucide-react'
-import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { ThemeToggle } from '../../theme-toggle'
 import {
@@ -80,12 +79,6 @@ function NavbarRightSide() {
       <div className="hidden items-center gap-3 md:flex">
         <ThemeToggle />
         <RenownButton />
-        <Link
-          href="/packages"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
-        >
-          Try Our Beta
-        </Link>
       </div>
 
       <div className="flex items-center md:hidden">
