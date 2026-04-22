@@ -3,6 +3,7 @@
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { LogIn, LogOut, Loader2, MoreVertical, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 import { ThemeToggle } from '../../theme-toggle'
 import {
   DropdownMenu,
@@ -16,16 +17,38 @@ import ThemeIconLabel from './toogle-theme-label'
 const btnSecondary =
   'bg-accent text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all cursor-pointer'
 
+function RenownButtonLoading() {
+  return (
+    <span className={btnSecondary}>
+      <Loader2 className="h-4 w-4 animate-spin" />
+      Loading
+    </span>
+  )
+}
+
+/**
+ * Gate that delays mounting `RenownButtonInner` (which subscribes to the
+ * Renown store via `useRenownAuth`) until after the first client render.
+ * Subscribing inside the same commit pass that `<Renown />` fires its
+ * internal `setRenown(null)` side effect triggers a React "setState during
+ * another component's render" warning AND can mis-seat the post-redirect
+ * `?user=` login attempt (the user ends up having to log in twice).
+ *
+ * Critically, the inner component is only *rendered* after the gate flips,
+ * so the hook is never called during the racy first commit.
+ */
 function RenownButton() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return <RenownButtonLoading />
+  return <RenownButtonInner />
+}
+
+function RenownButtonInner() {
   const auth = useRenownAuth()
 
   if (auth.status === 'loading' || auth.status === 'checking') {
-    return (
-      <span className={btnSecondary}>
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading
-      </span>
-    )
+    return <RenownButtonLoading />
   }
   if (auth.status === 'authorized') {
     return (

@@ -8,8 +8,12 @@ import { setAuthTokenProvider } from '../../client'
  * Registers a bearer-token provider with the reactor client so every
  * GraphQL request carries the current user's Renown identity.
  *
- * Mount this once, near the top of the tree (after `<RenownProvider />`).
- * It has no rendered output.
+ * Mounted inside `RenownProvider` (not as a top-level sibling of
+ * `<Renown />`) so it sits below Renown in commit order. Mounting it as a
+ * sibling races with Renown's internal `setRenown(null)` side effect,
+ * which triggers a React "setState during render" warning and, in the
+ * post-redirect login flow, can cause the first `?user=` DID attempt to
+ * be dropped — producing the user-visible "had to log in twice" UX.
  */
 export function AuthBridge() {
   const renown = useRenown()
