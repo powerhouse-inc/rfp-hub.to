@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, ExternalLink, Hash, Shield, User } from 'lucide-react'
 import { useState } from 'react'
 import type { Rfp } from '../types'
+import { toDaoip5, toSchemaOrgGrant } from '../jsonld'
 import { RfpStatusBadge } from './rfp-status-badge'
 
 function formatDate(iso: string | null): string {
@@ -24,8 +25,17 @@ function formatAmount(amount: string | null, currency: string | null): string {
   }).format(n)}${currency ? ` ${currency}` : ''}`
 }
 
+type ExportView = 'raw' | 'daoip5' | 'schemaOrg'
+
 export function RfpDetail({ rfp }: { rfp: Rfp }) {
   const [showJson, setShowJson] = useState(false)
+  const [exportView, setExportView] = useState<ExportView>('raw')
+
+  const exports: Record<ExportView, { label: string; payload: unknown }> = {
+    raw: { label: 'Canonical', payload: rfp },
+    daoip5: { label: 'DAOIP-5 GrantPool', payload: toDaoip5(rfp) },
+    schemaOrg: { label: 'schema.org/MonetaryGrant', payload: toSchemaOrgGrant(rfp) },
+  }
   return (
     <article className="mx-auto max-w-4xl px-6 py-12">
       <Link
@@ -75,16 +85,36 @@ export function RfpDetail({ rfp }: { rfp: Rfp }) {
             </div>
           ) : null}
           <div>
-            <button
-              type="button"
-              onClick={() => setShowJson((v) => !v)}
-              className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
-            >
-              {showJson ? 'Hide' : 'Show'} raw JSON (DAOIP-5-compatible)
-            </button>
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowJson((v) => !v)}
+                className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              >
+                {showJson ? 'Hide' : 'Show'} exports
+              </button>
+              {showJson ? (
+                <div className="flex items-center gap-1 border border-border p-0.5">
+                  {(Object.keys(exports) as ExportView[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setExportView(k)}
+                      className={
+                        exportView === k
+                          ? 'bg-foreground px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-background'
+                          : 'px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground'
+                      }
+                    >
+                      {exports[k].label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             {showJson ? (
-              <pre className="mt-3 overflow-x-auto border border-border bg-foreground/[0.02] p-4 font-mono text-xs leading-relaxed text-foreground/80">
-                {JSON.stringify(rfp, null, 2)}
+              <pre className="overflow-x-auto border border-border bg-foreground/[0.02] p-4 font-mono text-xs leading-relaxed text-foreground/80">
+                {JSON.stringify(exports[exportView].payload, null, 2)}
               </pre>
             ) : null}
           </div>
