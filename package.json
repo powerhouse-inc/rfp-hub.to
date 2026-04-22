@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Reference frontend for the RFP Hub — the open index of web3 funding opportunities.",
+  "license": "AGPL-3.0-only",
+  "schemaLicense": "CC0-1.0",
   "scripts": {
     "tsc": "tsc",
     "dev": "next dev --turbopack",
