@@ -1,30 +1,34 @@
-import VetraLogoWithText from '@/modules/shared/components/svgs/vetra-logo-with-vetra.svg'
-import VetraIcon from '@/modules/shared/components/svgs/vetra-logo.svg'
 import type { NavbarConfig } from './types'
 
 export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
-  '/vetra': {
-    isotype: VetraIcon,
-    logotype: VetraLogoWithText,
+  '/rfp-hub': {
     logoHref: '/',
     navItems: [
       {
-        label: 'Packages',
-        href: '/packages',
-        isActive: (currentPath) => currentPath.includes('/packages'),
+        label: 'RFPs',
+        href: '/rfps',
+        isActive: (currentPath) => currentPath.startsWith('/rfps'),
       },
       {
-        label: 'Builders',
-        href: '/builders',
-        isActive: (currentPath) => currentPath.includes('/builders'),
+        label: 'Publishers',
+        href: '/publishers',
+        isActive: (currentPath) => currentPath.startsWith('/publishers'),
       },
-      { label: 'Academy', href: 'https://academy.vetra.io/', isExternal: true },
-      { label: 'Cloud', href: '/cloud', isActive: (currentPath) => currentPath.includes('/cloud') },
+      {
+        label: 'Submit',
+        href: '/submit',
+        isActive: (currentPath) => currentPath.startsWith('/submit'),
+      },
+      {
+        label: 'API',
+        href: '/api-docs',
+        isActive: (currentPath) => currentPath.startsWith('/api-docs'),
+      },
     ],
     authComponent: 'loginButton',
   },
 }
 
-export const getNavbarConfig = (pathname: string): NavbarConfig => {
-  return NAVBAR_CONFIGS['/vetra']
+export const getNavbarConfig = (_pathname: string): NavbarConfig => {
+  return NAVBAR_CONFIGS['/rfp-hub']
 }

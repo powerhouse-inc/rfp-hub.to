@@ -1,15 +1,7 @@
 import type { Route } from 'next'
 
-export type NetworkSlug =
-  | 'sky'
-  | 'powerhouse'
-  | 'spark'
-  | 'grove'
-  | 'launch-agent-2'
-  | 'launch-agent-3'
-
-export type NetworkPages = 'contributors' | 'roadmaps' | 'finances' | 'builders'
-
-export type RouteWithDynamicPages = Route<
-  `/network/${NetworkSlug}` | `/network/${NetworkSlug}/${NetworkPages}`
->
+/**
+ * Permissive route type for RFP Hub nav. Allows any app route string.
+ * Next's typedRoutes will still validate at consumer call-sites where needed.
+ */
+export type RouteWithDynamicPages = Route | string

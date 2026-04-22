@@ -10,16 +10,12 @@ function readEnv(key: string): string {
   return process.env[key] ?? ''
 }
 
-function getEndpoint(): string {
-  return (
-    readEnv('NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL') ||
-    readEnv('NEXT_PUBLIC_SWITCHBOARD_URL') ||
-    'https://switchboard.vetra.io/graphql'
-  )
+export function getEndpoint(): string {
+  return readEnv('NEXT_PUBLIC_SWITCHBOARD_URL') || 'http://localhost:4001/graphql'
 }
 
-function getDriveId(): string {
-  return readEnv('NEXT_PUBLIC_CLOUD_DRIVE_ID') || 'powerhouse'
+export function getDriveId(): string {
+  return readEnv('NEXT_PUBLIC_RFP_HUB_DRIVE_ID') || 'rfp-hub'
 }
 
 /**
@@ -31,21 +27,10 @@ export type AuthTokenProvider = () => Promise<string | null>
 
 let authTokenProvider: AuthTokenProvider | null = null
 
-/**
- * Register the bearer-token provider for all reactor client requests.
- * Call this once at app startup (after Renown is available) so every
- * request carries the caller's identity.
- */
 export function setAuthTokenProvider(provider: AuthTokenProvider | null): void {
   authTokenProvider = provider
 }
 
-/**
- * Resolve a bearer token, trying the registered provider first, then
- * falling back to the global Renown instance (window.ph.renown). The
- * fallback covers the race where the signer/controller is ready before
- * CloudAuthBridge's useEffect has fired.
- */
 async function resolveToken(): Promise<string | null> {
   if (authTokenProvider) {
     try {
@@ -73,8 +58,7 @@ async function resolveToken(): Promise<string | null> {
 
 /**
  * SDK middleware that attaches an `Authorization: Bearer <renown-token>`
- * header to every reactor GraphQL request. Falls back to window.ph.renown
- * when the React-level provider hasn't been registered yet.
+ * header to every reactor GraphQL request when a token is available.
  */
 async function withAuth<T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -84,8 +68,38 @@ async function withAuth<T>(
   return action({ authorization: `Bearer ${token}` })
 }
 
-/** Reactor GraphQL client used for signed action push/pull. */
+/** Reactor GraphQL client for signed action push/pull. */
 export const client = createClient(getEndpoint(), withAuth)
 
-/** ID of the drive that holds vetra-cloud-environment documents. */
+/** Public, unauthenticated GraphQL fetcher for the read path. */
+type GqlResponse<T> = {
+  data?: T
+  errors?: Array<{ message?: string }>
+}
+
+export async function gql<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
+  const token = await resolveToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(getEndpoint(), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ query, variables }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`GraphQL request failed: ${res.status} ${res.statusText}`)
+  }
+
+  const json = (await res.json()) as GqlResponse<T>
+  if (json.errors?.length) {
+    throw new Error(json.errors[0].message ?? 'GraphQL error')
+  }
+  return json.data as T
+}
+
 export const DRIVE_ID = getDriveId()

@@ -1,6 +1,6 @@
-import { Inter } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
-import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
+import { AuthBridge } from '@/modules/shared/components/auth-bridge'
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
@@ -18,9 +18,15 @@ const inter = Inter({
   weight: ['400', '500', '600', '700', '800'],
 })
 
+const mono = JetBrains_Mono({
+  variable: '--font-mono',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+})
+
 export const metadata: Metadata = {
-  title: 'Vetra',
-  description: 'Vetra',
+  title: 'RFP Hub',
+  description: 'The open index of web3 funding opportunities.',
 }
 
 export default async function RootLayout({
@@ -43,24 +49,20 @@ export default async function RootLayout({
                 process.env.GRAPHQL_ENDPOINT ||
                 process.env.NEXT_PUBLIC_SWITCHBOARD_URL ||
                 '',
-              NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL:
-                process.env.CLOUD_SWITCHBOARD_URL ||
-                process.env.NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL ||
-                '',
-              NEXT_PUBLIC_CLOUD_DRIVE_ID:
-                process.env.CLOUD_DRIVE_ID || process.env.NEXT_PUBLIC_CLOUD_DRIVE_ID || '',
+              NEXT_PUBLIC_RFP_HUB_DRIVE_ID:
+                process.env.RFP_HUB_DRIVE_ID || process.env.NEXT_PUBLIC_RFP_HUB_DRIVE_ID || '',
               NEXT_PUBLIC_RENOWN_URL:
                 process.env.RENOWN_URL || process.env.NEXT_PUBLIC_RENOWN_URL || '',
             })}`,
           }}
         />
       </head>
-      <body className={`${inter.variable} bg-background antialiased`}>
+      <body className={`${inter.variable} ${mono.variable} bg-background antialiased`}>
         <NuqsAdapter>
           <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
             <QueryClientProvider>
-              <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
-              <CloudAuthBridge />
+              <RenownProvider appName="rfp-hub" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
+              <AuthBridge />
               <div className="items-right flex min-h-screen flex-col">
                 <Navbar />
                 <main className="flex-1">{children}</main>
