@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { cn } from '@/modules/shared/lib/utils'
+import { usePublisherLookup } from '@/modules/publishers'
 import type { GrantPool } from '../types'
 import { RfpStatusBadge } from './rfp-status-badge'
 
@@ -49,25 +52,26 @@ function formatPoolSize(pool: GrantPool): string | null {
 }
 
 /**
- * Identifier of the funder. Until we resolve `grantSystemRef` into a
- * GrantSystem document (fetched separately in a follow-up pass), we fall back
- * to the publisher or submitter DID — both of which are available on the pool
- * itself.
+ * Identifier of the funder. Prefers the GrantSystem's human name (resolved
+ * via usePublisherLookup from grantSystemRef PHID). Falls back to the
+ * publisher or submitter DID if the GrantSystem hasn't loaded.
  */
-function resolveFunderLabel(pool: GrantPool): string {
+function resolveFunderLabel(pool: GrantPool, lookupName: string | null): string {
+  if (lookupName) return lookupName
   if (pool.publisher?.identifier) {
     const id = pool.publisher.identifier
     if (id.startsWith('did:ethr:')) return id.slice('did:ethr:'.length)
     return id
   }
-  if (pool.grantSystemRef) return pool.grantSystemRef
+  if (pool.grantSystemRef) return `${pool.grantSystemRef.slice(0, 8)}…`
   if (pool.submitter?.identifier) return pool.submitter.identifier
   return 'Unknown funder'
 }
 
 export function RfpCard({ rfp, className }: { rfp: GrantPool; className?: string }) {
+  const lookup = usePublisherLookup()
   const amount = formatPoolSize(rfp)
-  const funder = resolveFunderLabel(rfp)
+  const funder = resolveFunderLabel(rfp, lookup(rfp.grantSystemRef))
   const ecosystem = rfp.ecosystems[0] ?? null
   return (
     <Link

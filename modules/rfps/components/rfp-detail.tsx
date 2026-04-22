@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react'
 import { useState } from 'react'
+import { usePublisherLookup } from '@/modules/publishers'
 import type { GrantPool } from '../types'
 import { LIFECYCLE_LABEL } from '../types'
 import { toDaoip5, toSchemaOrgGrant } from '../jsonld'
@@ -64,6 +65,8 @@ function formatIdentifier(id: string | null | undefined): string {
 export function RfpDetail({ rfp }: { rfp: GrantPool }) {
   const [showJson, setShowJson] = useState(false)
   const [exportView, setExportView] = useState<ExportView>('raw')
+  const lookupPublisher = usePublisherLookup()
+  const funderName = lookupPublisher(rfp.grantSystemRef)
 
   const exports: Record<ExportView, { label: string; payload: unknown }> = {
     raw: { label: 'Canonical', payload: rfp },
@@ -192,10 +195,10 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
           {rfp.grantSystemRef ? (
             <MetaRow label="Funder">
               <Link
-                href={`/publishers?id=${encodeURIComponent(rfp.grantSystemRef)}`}
-                className="font-mono text-xs break-all hover:text-foreground"
+                href={`/publishers/${encodeURIComponent(rfp.grantSystemRef)}`}
+                className="text-sm hover:text-foreground"
               >
-                {formatIdentifier(rfp.grantSystemRef)}
+                {funderName ?? formatIdentifier(rfp.grantSystemRef)}
               </Link>
             </MetaRow>
           ) : null}
