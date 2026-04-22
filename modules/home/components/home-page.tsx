@@ -26,17 +26,18 @@ function Hero() {
         <div>
           <span className="mb-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-            Canonical superset of DAOIP-5 · schema.org/Grant · CC0
+            Open data · DAOIP-5 schema · CC0
           </span>
           <h1 className="mb-6 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-            The open index of web3
+            Every web3 grant,
             <br />
-            funding opportunities.
+            in one place.
           </h1>
           <p className="mb-8 max-w-2xl text-lg text-foreground/70">
-            A canonical RFP object format, a public GraphQL API, signed operation-log provenance,
-            and governance-as-document review. Built on Powerhouse. CC0 schema. AGPL-3.0 code.
-            Shipped as public-goods infrastructure.
+            Grant programs are scattered across a dozen portals, Notion pages and PDFs. We pulled
+            them into one queryable index so builders can find what&apos;s open and aggregators
+            can plug into a single API. Open schema, open code, no lock-in — fork it, host your
+            own, compete with us.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link
@@ -122,10 +123,10 @@ function LatestRfps() {
       <div className="mx-auto max-w-6xl px-6 py-20">
         <div className="mb-10 flex items-end justify-between gap-6">
           <div>
-            <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Latest RFPs</h2>
+            <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">What&apos;s open right now</h2>
             <p className="max-w-xl text-foreground/70">
-              Grant pools from your connected Switchboard — no placeholder data. Start the
-              RFP Hub switchboard to see what&apos;s in the live reactor.
+              Live from the reactor. Nothing mocked. Click a card for the full brief, deadline
+              and contact.
             </p>
           </div>
           <Link
@@ -158,48 +159,48 @@ function HowItWorks() {
   const steps = [
     {
       icon: Database,
-      title: 'Standard RFP object',
+      title: 'One schema for every grant',
       body:
-        'A canonical superset of DAOstar DAOIP-5 GrantPool and schema.org/MonetaryGrant, with the process fields RFPs actually need — submitter, verification state, dispute handling. JSON-LD projections are emitted in parallel.',
+        'Grants look the same whether they come from Gitcoin, Optimism, or Stellar — same fields, same shape. We follow DAOstar&apos;s DAOIP-5 spec and also emit schema.org/Grant so Google indexes them properly.',
     },
     {
       icon: GitBranch,
-      title: 'Five export surfaces',
+      title: 'Pull the data however you like',
       body:
-        'Public GraphQL API with search/filter/pagination. Nightly checksummed JSON snapshots. RSS + Atom feeds. Webhooks with retry and dead-letter. Content-addressed mirrors on IPFS + Swarm.',
+        'GraphQL for queries. RSS for your feed reader. Webhooks when you want to get pinged. A nightly JSON dump if you want the whole thing. IPFS mirrors so it still works if we go down.',
     },
     {
       icon: Shield,
-      title: 'Signed, three-layer dedup',
+      title: 'Every edit is signed',
       body:
-        'Every operation is Renown-signed and appended to a replayable log. Duplicates are rejected at three layers: deterministic operation IDs, executor idempotency, and domain-key (funder + title, canonical URL) fingerprints.',
+        'Every change is cryptographically signed and appended to a replayable log. You can audit who added what, and duplicates get caught before they land — no more three copies of the same round from three sources.',
     },
     {
       icon: Scale,
-      title: 'Governance as document',
+      title: 'Rules out in the open',
       body:
-        'The publisher allowlist, dispute queue, and schema-evolution RFC process live inside their own Document Model. Policy changes leave the same audit trail as data changes.',
+        'Who counts as a verified publisher, how disputes get resolved, what gets indexed — all of it lives in a document anyone can read. When we make a call, it&apos;s in Git, not a Slack thread.',
     },
     {
       icon: Download,
       title: 'CC0 schema, AGPL code',
       body:
-        'The object format is dedicated to the public domain so any aggregator, competing registry, or traditional funder can adopt it without licensing friction. The reference implementation is strong-copyleft AGPL-3.0.',
+        'The data format is public domain. Fork it. Compete with us. Build your own registry on top. The code is AGPL so nobody can close it off later.',
     },
     {
       icon: Code2,
-      title: 'Federation-ready',
+      title: 'Multiple hubs, one query',
       body:
-        'Every operator runs the same schema. A single aggregator can consume N RFP Hub instances. Non-Ethereum funders ingest without schema change. Pilot scope is Ethereum; architectural scope is broader.',
+        'Every hub speaks the same schema, so an aggregator can hit ten of them and stitch the results together. Starting with Ethereum, but Solana and Cosmos funders fit just as well.',
     },
   ]
   return (
     <section className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">How it works</h2>
+        <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Why we built it</h2>
         <p className="mb-12 max-w-xl text-foreground/70">
-          Six pieces, one hub. Every hard requirement in the Ethereum Foundation&apos;s RFP Hub
-          brief maps directly to Powerhouse infrastructure already running in production.
+          Finding an open grant round in web3 today means hunting across Twitter, a dozen blog
+          posts, and a couple of Notion pages. That&apos;s silly. Here&apos;s what we did about it.
         </p>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {steps.map((s) => (
@@ -244,11 +245,10 @@ curl https://rfp-hub.example/rfps/<id>/schema-org.jsonld`
     <section>
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-20 md:grid-cols-2">
         <div>
-          <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">One contract, five surfaces</h2>
+          <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Query it your way</h2>
           <p className="mb-6 max-w-lg text-foreground/70">
-            Every RFP Hub operator exposes the same schema across GraphQL, snapshot downloads,
-            feeds, webhooks, and content-addressed mirrors. Pick whichever shape your aggregator
-            wants.
+            Same data behind every endpoint — so whether you prefer GraphQL, a JSON blob, or an
+            RSS feed, you get the same answer. Pick your poison:
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
