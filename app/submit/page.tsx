@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { SubmitForm } from '@/modules/submit'
 
 export const metadata: Metadata = {
@@ -7,6 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function SubmitPage() {
+  if (process.env.NODE_ENV === 'production') {
+    notFound()
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <header className="mb-10">

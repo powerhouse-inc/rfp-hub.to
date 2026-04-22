@@ -5,6 +5,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { cn } from '@/modules/shared/lib/utils'
 import { usePublisherLookup } from '@/modules/publishers'
 import type { GrantPool } from '../types'
+import { ApplyToGrantDialog } from './apply-to-grant-dialog'
 import { RfpStatusBadge } from './rfp-status-badge'
 
 function formatDeadline(iso: string | null): string {
@@ -74,49 +75,65 @@ export function RfpCard({ rfp, className }: { rfp: GrantPool; className?: string
   const funder = resolveFunderLabel(rfp, lookup(rfp.grantSystemRef))
   const ecosystem = rfp.ecosystems[0] ?? null
   return (
-    <Link
-      href={`/rfps/${rfp.id}`}
+    <div
       className={cn(
-        'group relative block border border-border bg-background p-5 transition-colors hover:border-foreground/40',
+        'group relative min-w-0 border border-border bg-background transition-colors hover:border-foreground/40',
         className,
       )}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <RfpStatusBadge lifecycle={rfp.lifecycle} />
-        <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-          {formatDeadline(rfp.closeDate)}
-        </span>
-      </div>
-      <h3 className="mb-1 text-lg font-medium leading-tight tracking-tight">
-        {rfp.name || 'Untitled'}
-      </h3>
-      <div className="mb-3 font-mono text-xs text-muted-foreground">
-        {funder}
-        {ecosystem ? <span className="mx-1.5 text-foreground/20">/</span> : null}
-        {ecosystem}
-      </div>
-      <p className="mb-4 line-clamp-2 text-sm text-foreground/70">
-        {rfp.description ?? ''}
-      </p>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-1.5">
-          {rfp.categories.slice(0, 3).map((c: string) => (
-            <span
-              key={c}
-              className="border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-            >
-              {c}
-            </span>
-          ))}
+      <Link
+        href={`/rfps/${rfp.id}`}
+        className="relative block min-w-0 overflow-hidden p-5 pb-3 transition-colors"
+      >
+        <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+          <RfpStatusBadge lifecycle={rfp.lifecycle} />
+          <span className="shrink-0 font-mono text-xs uppercase tracking-wider text-muted-foreground dark:text-foreground/75">
+            {formatDeadline(rfp.closeDate)}
+          </span>
         </div>
-        {amount ? (
-          <span className="font-mono text-sm font-medium text-foreground">{amount}</span>
-        ) : null}
+        <h3 className="mb-1 min-w-0 break-words text-lg font-medium leading-tight tracking-tight">
+          {rfp.name || 'Untitled'}
+        </h3>
+        <div
+          className="mb-3 min-w-0 max-w-full break-all font-mono text-xs text-muted-foreground"
+          title={funder + (ecosystem ? ` / ${ecosystem}` : '')}
+        >
+          {funder}
+          {ecosystem ? <span className="mx-1.5 text-foreground/20">/</span> : null}
+          {ecosystem}
+        </div>
+        <p className="mb-4 line-clamp-2 text-sm text-foreground/70">
+          {rfp.description ?? ''}
+        </p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-1.5">
+            {rfp.categories.slice(0, 3).map((c: string) => (
+              <span
+                key={c}
+                className="border border-border bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-foreground/70 dark:border-border/90 dark:bg-foreground/10 dark:text-foreground/90"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+          {amount ? (
+            <span className="font-mono text-sm font-medium text-foreground">{amount}</span>
+          ) : null}
+        </div>
+        <ArrowUpRight
+          className="absolute right-4 top-4 size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+          strokeWidth={1.5}
+        />
+      </Link>
+      <div className="flex items-center justify-end border-t border-border bg-foreground/[0.02] px-3 py-2.5">
+        <ApplyToGrantDialog
+          rfp={rfp}
+          size="sm"
+          variant="outline"
+          triggerLabel="Apply"
+          triggerClassName="font-mono text-xs uppercase tracking-wider"
+        />
       </div>
-      <ArrowUpRight
-        className="absolute right-4 top-4 size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-        strokeWidth={1.5}
-      />
-    </Link>
+    </div>
   )
 }

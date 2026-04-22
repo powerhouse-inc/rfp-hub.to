@@ -24,11 +24,12 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
         href: '/exports',
         isActive: (currentPath) => currentPath.startsWith('/exports'),
       },
-      {
-        label: 'Submit',
-        href: '/submit',
-        isActive: (currentPath) => currentPath.startsWith('/submit'),
-      },
+      // Hidden from production nav — direct /submit is also disabled in prod (see app/submit/page.tsx).
+      // {
+      //   label: 'Submit',
+      //   href: '/submit',
+      //   isActive: (currentPath) => currentPath.startsWith('/submit'),
+      // },
     ],
     authComponent: 'loginButton',
   },

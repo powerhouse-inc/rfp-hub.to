@@ -5,7 +5,7 @@ const footerLinks = {
   hub: [
     { label: 'RFPs', href: '/rfps' },
     { label: 'Publishers', href: '/publishers' },
-    { label: 'Submit', href: '/submit' },
+    // { label: 'Submit', href: '/submit' }, // see app/submit/page.tsx — disabled in production
   ],
   resources: [
     { label: 'API', href: '/api-docs' },

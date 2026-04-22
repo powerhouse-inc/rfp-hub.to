@@ -2,7 +2,9 @@ import { cn } from '@/modules/shared/lib/utils'
 import { LIFECYCLE_LABEL, type GrantPoolLifecycle } from '../types'
 
 const CLASSES: Record<GrantPoolLifecycle, string> = {
-  OPEN: 'bg-[var(--accent)]/10 text-[var(--accent)] ring-[var(--accent)]/30',
+  // Light: indigo from --accent. Dark: --accent is a grey near the page bg — use --primary (brand) for contrast.
+  OPEN:
+    'bg-[var(--accent)]/10 text-[var(--accent)] ring-[var(--accent)]/30 dark:bg-primary/15 dark:text-primary dark:ring-primary/40',
   UPCOMING: 'bg-foreground/5 text-foreground/80 ring-border',
   REQUEST_FOR_COMMENTS: 'bg-foreground/5 text-foreground/80 ring-border',
   AWARDED: 'bg-foreground/5 text-foreground/80 ring-border',

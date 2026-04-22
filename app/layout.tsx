@@ -60,14 +60,15 @@ export default async function RootLayout({
         <NuqsAdapter>
           <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
             <QueryClientProvider>
-              <RenownProvider appName="rfp-hub" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
-              <div className="items-right flex min-h-screen flex-col">
-                <Navbar />
-                {/* pt-16 offsets the fixed-position navbar (h-16) so page
+              <RenownProvider appName="rfp-hub" url={process.env.NEXT_PUBLIC_RENOWN_URL}>
+                <div className="items-right flex min-h-screen flex-col">
+                  <Navbar />
+                  {/* pt-16 offsets the fixed-position navbar (h-16) so page
                     headings don't slide under it. */}
-                <main className="flex-1 pt-16">{children}</main>
-                <Footer />
-              </div>
+                  <main className="flex-1 pt-16">{children}</main>
+                  <Footer />
+                </div>
+              </RenownProvider>
               <Toaster />
             </QueryClientProvider>
           </ThemeProvider>

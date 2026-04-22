@@ -81,11 +81,23 @@ export async function gql<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
+  return gqlAt<T>(getEndpoint(), query, variables)
+}
+
+/**
+ * GraphQL POST to a full URL (e.g. a namespaced switchboard path like `/graphql/apply-to`).
+ * Uses the same Renown bearer pattern as `gql`.
+ */
+export async function gqlAt<T>(
+  url: string,
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
   const token = await resolveToken()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(getEndpoint(), {
+  const res = await fetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify({ query, variables }),

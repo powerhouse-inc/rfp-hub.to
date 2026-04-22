@@ -17,6 +17,7 @@ import { usePublisherLookup } from '@/modules/publishers'
 import type { GrantPool } from '../types'
 import { LIFECYCLE_LABEL } from '../types'
 import { toDaoip5, toSchemaOrgGrant } from '../jsonld'
+import { ApplyToGrantDialog } from './apply-to-grant-dialog'
 import { RfpStatusBadge } from './rfp-status-badge'
 
 type ExportView = 'raw' | 'daoip5' | 'schemaOrg'
@@ -60,6 +61,10 @@ function formatIdentifier(id: string | null | undefined): string {
     const addr = id.slice('did:ethr:'.length)
     return `did:ethr:${addr.slice(0, 6)}…${addr.slice(-4)}`
   }
+  // Long pkh and other DIDs: shorten for display; full value still break-wraps in the UI.
+  if (id.length > 48) {
+    return `${id.slice(0, 24)}…${id.slice(-12)}`
+  }
   return id
 }
 
@@ -82,7 +87,7 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
   const verified = rfp.governanceState === 'APPROVED'
 
   return (
-    <article className="mx-auto max-w-4xl px-6 py-12">
+    <article className="mx-auto w-full min-w-0 max-w-4xl overflow-x-hidden px-6 py-12">
       <Link
         href="/rfps"
         className="mb-6 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
@@ -108,10 +113,13 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
         {rfp.description ? (
           <p className="max-w-2xl text-lg text-foreground/70">{rfp.description}</p>
         ) : null}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <ApplyToGrantDialog rfp={rfp} size="lg" triggerLabel="Apply to this grant" />
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_18rem]">
-        <section className="space-y-8">
+      <div className="grid min-w-0 grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_18rem]">
+        <section className="min-w-0 space-y-8">
           {rfp.eligibilityCriteria ? (
             <CriteriaBlock title="Eligibility" body={rfp.eligibilityCriteria} />
           ) : null}
@@ -195,14 +203,16 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
               ) : null}
             </div>
             {showJson ? (
-              <pre className="overflow-x-auto border border-border bg-foreground/[0.02] p-4 font-mono text-xs leading-relaxed text-foreground/80">
-                {JSON.stringify(exports[exportView].payload, null, 2)}
-              </pre>
+              <div className="w-full min-w-0 max-w-full">
+                <pre className="max-h-[min(70svh,32rem)] w-full min-w-0 max-w-full overflow-x-auto overflow-y-auto overscroll-contain border border-border bg-foreground/[0.02] p-4 font-mono text-xs leading-relaxed text-foreground/80">
+                  {JSON.stringify(exports[exportView].payload, null, 2)}
+                </pre>
+              </div>
             ) : null}
           </div>
         </section>
 
-        <aside className="space-y-6 border-l border-border pl-6 text-sm">
+        <aside className="min-w-0 max-w-full space-y-6 overflow-x-hidden border-l border-border pl-6 text-sm md:max-w-[18rem]">
           <MetaRow icon={<Calendar className="size-3.5" strokeWidth={1.5} />} label="Opens">
             {formatDate(rfp.openDate)}
           </MetaRow>
@@ -217,7 +227,7 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
             <MetaRow label="Funder">
               <Link
                 href={`/publishers/${encodeURIComponent(rfp.grantSystemRef)}`}
-                className="text-sm hover:text-foreground"
+                className="break-all text-sm hover:text-foreground"
               >
                 {funderName ?? formatIdentifier(rfp.grantSystemRef)}
               </Link>
@@ -266,12 +276,14 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
             <div className="space-y-2.5 text-xs">
               <MetaRow icon={<User className="size-3" strokeWidth={1.5} />} label="Submitter">
                 {rfp.submitter ? (
-                  <>
-                    <span className="font-mono">{formatIdentifier(rfp.submitter.identifier)}</span>
-                    <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="flex min-w-0 max-w-full flex-col gap-1">
+                    <span className="w-full min-w-0 break-all font-mono text-xs">
+                      {formatIdentifier(rfp.submitter.identifier)}
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                       {rfp.submitter.type}
                     </span>
-                  </>
+                  </div>
                 ) : (
                   '—'
                 )}
@@ -314,12 +326,12 @@ function MetaRow({
   children: React.ReactNode
 }) {
   return (
-    <div>
-      <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+    <div className="min-w-0 max-w-full">
+      <div className="mb-1 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         {icon}
-        {label}
+        <span className="min-w-0 break-words">{label}</span>
       </div>
-      <div className="text-foreground/90">{children}</div>
+      <div className="min-w-0 max-w-full text-foreground/90 [overflow-wrap:anywhere]">{children}</div>
     </div>
   )
 }

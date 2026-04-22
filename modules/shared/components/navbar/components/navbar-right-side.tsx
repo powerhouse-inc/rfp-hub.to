@@ -39,7 +39,19 @@ function RenownButtonLoading() {
  */
 function RenownButton() {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  // Defer subscribing until after `<Renown />`’s `useRenownInit` has finished the
+  // current turn (avoids React 19 "Cannot update … RenownButtonInner … while
+  // rendering … Renown" when Renown and navbar were siblings).
+  useEffect(() => {
+    let t2 = 0
+    const t1 = window.requestAnimationFrame(() => {
+      t2 = window.requestAnimationFrame(() => setMounted(true))
+    })
+    return () => {
+      window.cancelAnimationFrame(t1)
+      window.cancelAnimationFrame(t2)
+    }
+  }, [])
   if (!mounted) return <RenownButtonLoading />
   return <RenownButtonInner />
 }
@@ -72,7 +84,9 @@ function RenownButtonInner() {
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
-            onClick={() => auth.logout()}
+            onClick={() => {
+              void auth.logout()
+            }}
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-red-500 focus:text-red-500"
           >
             <LogOut className="h-4 w-4" />

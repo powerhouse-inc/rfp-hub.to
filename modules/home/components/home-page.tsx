@@ -7,7 +7,6 @@ import { RfpCard } from '@/modules/rfps'
 
 export function HomePage() {
   const stats = useHubStats()
-  const latest = useRfps({}, 3)
   return (
     <div>
       <Hero />
@@ -44,12 +43,12 @@ function Hero() {
           >
             Browse RFPs <ArrowRight className="size-4" strokeWidth={1.5} />
           </Link>
-          <Link
+          {/* <Link
             href="/submit"
             className="inline-flex items-center gap-2 border border-border px-5 py-3 text-sm font-medium hover:border-foreground/60"
           >
             Submit an RFP
-          </Link>
+          </Link> */}
           <Link
             href="/exports"
             className="inline-flex items-center gap-1 px-2 py-3 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
@@ -112,7 +111,8 @@ function LatestRfps() {
           <div>
             <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Latest RFPs</h2>
             <p className="max-w-xl text-foreground/70">
-              A live sample of what&apos;s currently indexed.
+              Grant pools from your connected Switchboard — no placeholder data. Start the
+              RFP Hub switchboard to see what&apos;s in the live reactor.
             </p>
           </div>
           <Link
@@ -126,12 +126,13 @@ function LatestRfps() {
           <div className="font-mono text-sm text-muted-foreground">Loading…</div>
         ) : items.length === 0 ? (
           <div className="border border-border bg-foreground/[0.02] p-6 text-sm text-muted-foreground">
-            No RFPs indexed yet — start the switchboard to populate this list.
+            No grant pools in Switchboard yet — start the RFP Hub service and set{' '}
+            <code className="font-mono text-foreground/90">NEXT_PUBLIC_SWITCHBOARD_URL</code>.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {items.map((rfp) => (
-              <RfpCard key={rfp.id} rfp={rfp} />
+              <RfpCard key={rfp.id} rfp={rfp} className="min-w-0" />
             ))}
           </div>
         )}

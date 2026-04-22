@@ -1,5 +1,4 @@
 import { gql } from '@/modules/shared/client'
-import { SAMPLE_POOLS } from './sample-data'
 import type {
   GrantPool,
   GrantPoolFilter,
@@ -86,9 +85,9 @@ async function fetchAllPools(): Promise<GrantPool[]> {
     )
     return data.GrantPool.findDocuments.items.map(mapListItem)
   } catch {
-    // No switchboard reachable — fall back to bundled sample data so the UI
-    // stays explorable for reviewers.
-    return SAMPLE_POOLS
+    // Only list grant pools that exist in the connected Switchboard reactor.
+    // No mock/sample data — avoids showing documents that are not in your drive.
+    return []
   }
 }
 
@@ -134,9 +133,7 @@ export async function fetchRfp(id: string): Promise<GrantPool | null> {
     const raw = data.GrantPool.document?.document
     return raw ? mapDocument(raw) : null
   } catch {
-    // Fallback: look it up in the list (including sample data).
-    const all = await fetchAllPools()
-    return all.find((p) => p.id === id) ?? null
+    return null
   }
 }
 

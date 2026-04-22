@@ -70,12 +70,13 @@ export function RfpList() {
         </div>
       ) : items.length === 0 ? (
         <div className="border border-border bg-foreground/[0.02] p-6 text-sm text-muted-foreground">
-          No grant pools match these filters.
+          No grant pools to show — only live Switchboard data is listed (no bundled samples). Clear
+          filters or add grant pools to your RFP Hub reactor.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((rfp) => (
-            <RfpCard key={rfp.id} rfp={rfp} />
+            <RfpCard key={rfp.id} rfp={rfp} className="min-w-0" />
           ))}
         </div>
       )}
