@@ -16,8 +16,11 @@ permissions:
 
 env:
   HARBOR_REGISTRY: cr.vetra.io
-  # Namespace provided by the Harbor admin (robot account: robot$rfp-hub+github).
-  HARBOR_PROJECT: rfp-hub
+  # Harbor project — robot account `robot$rpf-hub+github` is scoped to this
+  # project, so push paths under `cr.vetra.io/rpf-hub/*` are the only ones
+  # that authenticate. If the project is later renamed to `rfp-hub` the
+  # robot + this value need to change in lockstep.
+  HARBOR_PROJECT: rpf-hub
   IMAGE_NAME: rfp-hub-to
 
 jobs:
