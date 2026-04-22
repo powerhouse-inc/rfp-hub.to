@@ -2,25 +2,26 @@
 @import 'tw-animate-css';
 
 :root {
-  --background: #fcfcfc;
-  --foreground: #343839;
-  --card: #fcfcfc;
-  --card-foreground: #343839;
+  /* EF-leaning minimalist palette: white, near-black, single indigo accent. */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #343839;
-  --primary: #04c161;
+  --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f4;
-  --secondary-foreground: #343839;
-  --muted: #efefef;
-  --muted-foreground: #9ea0a1;
-  --accent: #f3f5f7;
-  --accent-foreground: #343839;
-  --destructive: #ea4335;
-  --destructive-foreground: #fcfcfc;
-  --border: #d7d8d9;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #6366f1;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
   --input: #ffffff;
-  --ring: #04c161;
+  --ring: #0a0a0a;
   --sidebar: #ffffff;
   --sidebar-foreground: #343839;
   --sidebar-primary: #04c161;
@@ -48,15 +49,16 @@
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
-  --radius: 0.75rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
+  /* Flatter, EF-leaning visuals — smaller radius, no ambient shadows. */
+  --radius: 0.125rem;
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
