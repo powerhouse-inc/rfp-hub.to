@@ -29,14 +29,14 @@ function Hero() {
             Open data · DAOIP-5 schema · CC0
           </span>
           <h1 className="mb-6 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-            Every web3 grant,
+            Not in one place.
             <br />
-            in one place.
+            On one layer.
           </h1>
           <p className="mb-8 max-w-2xl text-lg text-foreground/70">
-            Grant programs are scattered across a dozen portals, Notion pages and PDFs. We pulled
-            them into one queryable index so builders can find what&apos;s open and aggregators
-            can plug into a single API. Open schema, open code, no lock-in.
+            Web3 funding doesn&apos;t need another portal. It needs a shared substrate — one
+            signed schema that every aggregator, dashboard, and agent can read from. This
+            site is a reference view. The layer is the product.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link
@@ -157,48 +157,49 @@ function HowItWorks() {
   const steps = [
     {
       icon: Database,
-      title: 'One schema for every grant',
+      title: 'One vocabulary',
       body:
-        "Grants look the same whether they come from Gitcoin, Optimism, or Stellar — same fields, same shape. We follow DAOstar's DAOIP-5 spec and also emit schema.org/Grant so Google indexes them properly.",
+        "A DAOIP-5 superset with the process fields the spec doesn't cover — submitter identity, verification state, dispute history. Same fields whether the grant comes from Gitcoin, Optimism, or Stellar. CC0, so it's not ours to keep.",
     },
     {
       icon: GitBranch,
-      title: 'Pull the data however you like',
+      title: 'One source, many surfaces',
       body:
-        'GraphQL for queries. RSS for your feed reader. Webhooks when you want to get pinged. A nightly JSON dump if you want the whole thing. IPFS mirrors so it still works if we go down.',
+        'The same signed data is projected to DAOIP-5 JSON-LD, schema.org/MonetaryGrant, GraphQL, RSS, webhooks, nightly JSON, and IPFS mirrors. When upstream specs drift, the projection updates — not the source.',
     },
     {
       icon: Shield,
-      title: 'Every edit is signed',
+      title: 'Signed by construction',
       body:
-        'Every change is cryptographically signed and appended to a replayable log. You can audit who added what, and duplicates get caught before they land — no more three copies of the same round from three sources.',
+        'Every mutation is a signed, ordered, append-only operation. You can audit who added what and replay the log from zero. Three layers of dedupe mean one round does not arrive three times from three sources.',
     },
     {
       icon: Scale,
-      title: 'Rules out in the open',
+      title: 'No ranking, no gatekeeper',
       body:
-        'Who counts as a verified publisher, how disputes get resolved, what gets indexed — all of it lives in a document anyone can read. When we make a call, it&apos;s in Git, not a Slack thread.',
+        'Results come back deterministically — by deadline, then timestamp. No featured slots, no recommendation engine, no hidden weights. If that ever changes, it takes a public RFC.',
     },
     {
       icon: Download,
-      title: 'CC0 schema, AGPL code',
+      title: 'Forkable by design',
       body:
-        'The data format is public domain. Fork it. Compete with us. Build your own registry on top. The code is AGPL so nobody can close it off later.',
+        'Schema is CC0. Code is AGPL. Run your own hub, ship a different frontend, sit on top as an aggregator — the layer is meant to be built on, not owned.',
     },
     {
       icon: Code2,
       title: 'Multiple hubs, one query',
       body:
-        'Every hub speaks the same schema, so an aggregator can hit ten of them and stitch the results together. Starting with Ethereum, but Solana and Cosmos funders fit just as well.',
+        'Every hub speaks the same schema, so an aggregator can hit ten of them and stitch the results. Ethereum first, but Solana and Cosmos funders fit without a schema change.',
     },
   ]
   return (
     <section className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Why we built it</h2>
+        <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Why a layer</h2>
         <p className="mb-12 max-w-xl text-foreground/70">
-          Finding an open grant round in web3 today means hunting across Twitter, a dozen blog
-          posts, and a couple of Notion pages. That&apos;s silly. Here&apos;s what we did about it.
+          A sixth portal does not fix five portals. The fix is underneath — a shared schema, a
+          signed log, and public projections anyone can read. Six properties that make this a
+          substrate, not a site.
         </p>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {steps.map((s) => (
@@ -243,10 +244,11 @@ curl https://rfp-hub.example/rfps/<id>/schema-org.jsonld`
     <section>
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-20 md:grid-cols-2">
         <div>
-          <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">Query it your way</h2>
+          <h2 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">One source, many projections</h2>
           <p className="mb-6 max-w-lg text-foreground/70">
-            Same data behind every endpoint — so whether you prefer GraphQL, a JSON blob, or an
-            RSS feed, you get the same answer. Pick your poison:
+            These are not separate endpoints — they are projections of the same signed operation
+            log. GraphQL for queries, JSON-LD for linked-data consumers, RSS for feeds, nightly
+            JSON for archival. Pick the surface that fits.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
