@@ -2,20 +2,22 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useRenown } from '@powerhousedao/reactor-browser'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
 import { Textarea } from '@/modules/shared/components/ui/textarea'
 import { FUNDING_MECHANISM_OPTIONS, LIFECYCLE_OPTIONS } from '@/modules/rfps'
+import { usePublishers } from '@/modules/publishers'
 import { submitRfp, type SubmitResult } from '../dispatch'
 import { submitRfpSchema, type SubmitRfpInput } from '../schema'
 
 export function SubmitForm() {
-  const renown = useRenown()
-  const isConnected = Boolean(renown)
+  const qc = useQueryClient()
+  const publishers = usePublishers()
   const [result, setResult] = useState<SubmitResult | null>(null)
 
   const form = useForm<SubmitRfpInput>({
@@ -23,8 +25,7 @@ export function SubmitForm() {
     defaultValues: {
       name: '',
       description: '',
-      funder: '',
-      funderUrl: '',
+      grantSystemRef: '',
       categories: '',
       grantFundingMechanism: 'REQUEST_FOR_PROPOSAL',
       lifecycle: 'OPEN',
@@ -42,31 +43,22 @@ export function SubmitForm() {
   const onSubmit = async (values: SubmitRfpInput) => {
     const r = await submitRfp(values)
     setResult(r)
-    if (r.ok) form.reset()
+    if (r.ok) {
+      form.reset()
+      await qc.invalidateQueries({ queryKey: ['rfps'] })
+      await qc.invalidateQueries({ queryKey: ['hub-stats'] })
+      await qc.invalidateQueries({ queryKey: ['publishers'] })
+    }
   }
 
   if (result) {
     return <SubmitResultView result={result} onReset={() => setResult(null)} />
   }
 
+  const hasPublishers = (publishers.data?.length ?? 0) > 0
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-      {!isConnected ? (
-        <div className="flex items-start gap-3 border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-4 text-sm">
-          <AlertCircle
-            className="mt-0.5 size-4 flex-shrink-0 text-[var(--accent)]"
-            strokeWidth={1.5}
-          />
-          <div>
-            <p className="mb-1 font-medium text-foreground">Sign in to submit</p>
-            <p className="text-foreground/70">
-              Submissions are signed with your Renown identity so provenance is tracked on the
-              operation log. Use the &ldquo;Log in&rdquo; button in the top nav.
-            </p>
-          </div>
-        </div>
-      ) : null}
-
       <Section title="The basics">
         <Field label="Name" error={form.formState.errors.name?.message}>
           <Input {...form.register('name')} placeholder="Round 5 Retro Funding" />
@@ -85,18 +77,33 @@ export function SubmitForm() {
       </Section>
 
       <Section title="Funder">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field
-            label="Name"
-            error={form.formState.errors.funder?.message}
-            hint="Proxy until a GrantSystem document is linked."
+        <Field
+          label="Publisher (GrantSystem)"
+          hint={
+            hasPublishers ? undefined : (
+              <>
+                No publishers yet.{' '}
+                <Link href="/publishers/new" className="underline">
+                  Add one first
+                </Link>
+                .
+              </>
+            )
+          }
+        >
+          <select
+            {...form.register('grantSystemRef')}
+            className="h-9 w-full appearance-none border border-input bg-background px-3 text-sm disabled:opacity-50"
+            disabled={!hasPublishers}
           >
-            <Input {...form.register('funder')} placeholder="Optimism Foundation" />
-          </Field>
-          <Field label="Homepage" error={form.formState.errors.funderUrl?.message}>
-            <Input {...form.register('funderUrl')} placeholder="https://optimism.io" />
-          </Field>
-        </div>
+            <option value="">— none —</option>
+            {publishers.data?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.type ?? '?'})
+              </option>
+            ))}
+          </select>
+        </Field>
       </Section>
 
       <Section title="Classification">
@@ -158,17 +165,14 @@ export function SubmitForm() {
               inputMode="numeric"
             />
           </Field>
-          <Field label="Applications URI">
-            <Input
-              {...form.register('applicationsURI')}
-              placeholder="https://example.com/apply"
-            />
+          <Field label="Applications URI" error={form.formState.errors.applicationsURI?.message}>
+            <Input {...form.register('applicationsURI')} placeholder="https://example.com/apply" />
           </Field>
         </div>
       </Section>
 
       <Section title="Details (optional)">
-        <Field label="Briefing URI">
+        <Field label="Briefing URI" error={form.formState.errors.briefingURI?.message}>
           <Input {...form.register('briefingURI')} placeholder="https://example.com/brief" />
         </Field>
         <Field label="Eligibility criteria">
@@ -191,7 +195,7 @@ export function SubmitForm() {
         <Button type="button" variant="ghost" onClick={() => form.reset()}>
           Reset
         </Button>
-        <Button type="submit" disabled={form.formState.isSubmitting || !isConnected}>
+        <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" /> Submitting…
@@ -224,7 +228,7 @@ function Field({
 }: {
   label: string
   error?: string
-  hint?: string
+  hint?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -255,7 +259,7 @@ function SubmitResultView({
             strokeWidth={1.5}
           />
           <div>
-            <p className="mb-1 font-medium text-foreground">Submitted</p>
+            <p className="mb-1 font-medium text-foreground">Grant pool submitted</p>
             <p className="text-foreground/70">
               Document <span className="font-mono">{result.documentId}</span> is indexed and
               awaiting governance review.
@@ -269,13 +273,7 @@ function SubmitResultView({
             strokeWidth={1.5}
           />
           <div>
-            <p className="mb-1 font-medium text-foreground">Preview mode</p>
-            <p className="text-foreground/70">
-              The reactor isn&apos;t reachable — showing the GrantPool document your submission
-              would produce. Once a switchboard is live at{' '}
-              <code className="font-mono">NEXT_PUBLIC_SWITCHBOARD_URL</code>, this form dispatches
-              a signed <code className="font-mono">rfp-hub/grant-pool</code> create action.
-            </p>
+            <p className="mb-1 font-medium text-foreground">Submit failed</p>
             {result.error ? (
               <p className="mt-2 font-mono text-xs text-muted-foreground">{result.error}</p>
             ) : null}
@@ -285,10 +283,18 @@ function SubmitResultView({
       <pre className="overflow-x-auto border border-border bg-foreground/[0.02] p-4 font-mono text-xs leading-relaxed text-foreground/80">
         {JSON.stringify(result.preview, null, 2)}
       </pre>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onReset}>
           Submit another
         </Button>
+        {result.ok ? (
+          <Link
+            href={`/rfps/${result.documentId}`}
+            className="inline-flex items-center rounded-md border border-transparent bg-foreground px-4 py-2 text-sm font-medium text-background"
+          >
+            View RFP
+          </Link>
+        ) : null}
       </div>
     </div>
   )

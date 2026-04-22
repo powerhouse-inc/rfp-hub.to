@@ -7,8 +7,7 @@ export const submitRfpSchema = z.object({
     .string()
     .min(20, 'Summary should explain the funding opportunity in one or two sentences.')
     .max(500, 'Keep the description under 500 characters.'),
-  funder: z.string().min(2, 'Who is funding this grant pool?'),
-  funderUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
+  grantSystemRef: z.string().optional().or(z.literal('')),
   categories: z.string().min(1, 'At least one category helps others find this pool.'),
   grantFundingMechanism: z.enum(FUNDING_MECHANISM_OPTIONS as [string, ...string[]]),
   lifecycle: z.enum(LIFECYCLE_OPTIONS as [string, ...string[]]),
