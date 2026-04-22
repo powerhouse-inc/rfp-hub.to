@@ -36,8 +36,7 @@ function Hero() {
           <p className="mb-8 max-w-2xl text-lg text-foreground/70">
             Grant programs are scattered across a dozen portals, Notion pages and PDFs. We pulled
             them into one queryable index so builders can find what&apos;s open and aggregators
-            can plug into a single API. Open schema, open code, no lock-in — fork it, host your
-            own, compete with us.
+            can plug into a single API. Open schema, open code, no lock-in.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link
