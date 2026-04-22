@@ -65,12 +65,17 @@ function Hero() {
 function StatsBar({
   data,
 }: {
-  data?: { totalRfps: number; openRfps: number; totalFunders: number; updatedAt: string }
+  data?: {
+    totalPools: number
+    openPools: number
+    totalGrantSystems: number
+    updatedAt: string
+  }
 }) {
   const items = [
-    { label: 'RFPs indexed', value: data?.totalRfps ?? '—' },
-    { label: 'Currently open', value: data?.openRfps ?? '—' },
-    { label: 'Funders', value: data?.totalFunders ?? '—' },
+    { label: 'Grants indexed', value: data?.totalPools ?? '—' },
+    { label: 'Currently open', value: data?.openPools ?? '—' },
+    { label: 'Funders', value: data?.totalGrantSystems ?? '—' },
     {
       label: 'Last updated',
       value: data?.updatedAt

@@ -1,5 +1,5 @@
 import { gql } from '@/modules/shared/client'
-import { SAMPLE_RFPS } from '../rfps/sample-data'
+import { SAMPLE_POOLS } from '../rfps/sample-data'
 import type { Publisher } from './types'
 
 const FIELDS = `id name url description rfpCount verified`
@@ -22,21 +22,27 @@ function isSchemaMissing(err: unknown): boolean {
 }
 
 function derivePublishersFromSamples(): Publisher[] {
-  const byFunder = new Map<string, Publisher>()
-  for (const r of SAMPLE_RFPS) {
-    const existing = byFunder.get(r.funder)
+  // Group pools by grantSystemRef as a proxy for "funder" until we fetch
+  // GrantSystem documents directly.
+  const bySystem = new Map<string, Publisher>()
+  for (const pool of SAMPLE_POOLS) {
+    const key = pool.grantSystemRef ?? pool.publisher?.identifier ?? 'unknown'
+    const displayName = key.startsWith('sample-system-')
+      ? key.replace('sample-system-', '').replace(/^\w/, (c) => c.toUpperCase())
+      : key
+    const existing = bySystem.get(key)
     if (existing) {
       existing.rfpCount += 1
     } else {
-      byFunder.set(r.funder, {
-        id: r.funder,
-        name: r.funder,
-        url: r.funderUrl,
+      bySystem.set(key, {
+        id: key,
+        name: displayName,
+        url: null,
         description: null,
         rfpCount: 1,
-        verified: false,
+        verified: pool.governanceState === 'APPROVED',
       })
     }
   }
-  return Array.from(byFunder.values())
+  return Array.from(bySystem.values())
 }
