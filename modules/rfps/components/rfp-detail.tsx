@@ -12,7 +12,7 @@ import {
   User,
 } from 'lucide-react'
 import { useState } from 'react'
-import { ApplicationCard, useApplicationsForPool } from '@/modules/applications'
+import { ApplicationCard, useApplicationsFromURI } from '@/modules/applications'
 import { usePublisherLookup } from '@/modules/publishers'
 import type { GrantPool } from '../types'
 import { LIFECYCLE_LABEL } from '../types'
@@ -68,7 +68,10 @@ export function RfpDetail({ rfp }: { rfp: GrantPool }) {
   const [exportView, setExportView] = useState<ExportView>('raw')
   const lookupPublisher = usePublisherLookup()
   const funderName = lookupPublisher(rfp.grantSystemRef)
-  const applications = useApplicationsForPool(rfp.id)
+  // Applications aren't reactor documents — they come from the upstream
+  // DAOIP-5 applications_uri.json. Fetch live so the page stays in sync
+  // with whatever the funder publishes there.
+  const applications = useApplicationsFromURI(rfp.applicationsURI)
 
   const exports: Record<ExportView, { label: string; payload: unknown }> = {
     raw: { label: 'Canonical', payload: rfp },
