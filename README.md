@@ -94,10 +94,13 @@ docs/
 ## Related
 
 - **Design spec:** [`docs/superpowers/specs/2026-04-22-rfp-hub-fusion-page-design.md`](./docs/superpowers/specs/2026-04-22-rfp-hub-fusion-page-design.md)
-- **EF application draft:** [`docs/ef-application.md`](./docs/ef-application.md)
+- **EF application:** canonical proposal lives in the Powerhouse Google Doc (shared with reviewers). This repo is the reference frontend that the proposal commits to.
 - **Subgraph proposal:** [`docs/subgraph-proposal/`](./docs/subgraph-proposal/)
 - **Backend package:** [`powerhouse-inc/rfp-hub-app`](https://github.com/powerhouse-inc/rfp-hub-app)
 
 ## License
 
-AGPL-3.0 · Built by [Powerhouse](https://powerhouse.inc).
+- **Code** — AGPL-3.0-only ([`LICENSE`](./LICENSE))
+- **Schema** — CC0 1.0 Universal ([`SCHEMA-LICENSE.md`](./SCHEMA-LICENSE.md)); split intentionally so any downstream tool can adopt the object format without licensing friction.
+
+Built by [Powerhouse](https://powerhouse.inc).
