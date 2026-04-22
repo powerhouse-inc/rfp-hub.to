@@ -91,14 +91,7 @@ test.describe('Home page', () => {
   })
 })
 
-test.describe('Governance + Exports', () => {
-  test('governance page lists policies', async ({ page }) => {
-    await page.goto('/governance')
-    await expect(page.getByRole('heading', { name: 'Publisher allowlist' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Dispute lifecycle' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Schema-evolution RFC' })).toBeVisible()
-  })
-
+test.describe('Exports', () => {
   test('exports page lists all six surfaces', async ({ page }) => {
     await page.goto('/exports')
     await expect(page.getByRole('heading', { name: 'Nightly JSON snapshots' })).toBeVisible()

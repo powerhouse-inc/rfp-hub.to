@@ -5,7 +5,6 @@ const ROUTES = [
   { path: '/rfps', heading: 'Grant pools' },
   { path: '/publishers', heading: 'Publishers' },
   // /submit disabled in production; omitted from smoke (app/submit/page.tsx)
-  { path: '/governance', heading: 'The rules are a document' },
   { path: '/exports', heading: 'Six ways to consume the hub' },
   { path: '/api-docs', heading: 'GraphQL API' },
 ]
@@ -27,7 +26,6 @@ test.describe('Navigation', () => {
     const navLinks = [
       { label: 'RFPs', expectUrl: /\/rfps/, expectHeading: 'Grant pools' },
       { label: 'Publishers', expectUrl: /\/publishers/, expectHeading: 'Publishers' },
-      { label: 'Governance', expectUrl: /\/governance/, expectHeading: 'rules are a document' },
       { label: 'Exports', expectUrl: /\/exports/, expectHeading: 'Six ways to consume' },
     ]
 
