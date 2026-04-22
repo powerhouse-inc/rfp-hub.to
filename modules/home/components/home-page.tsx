@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Code2, Database, Download, GitBranch, Scale, Shield } from 'lucide-react'
 import { useHubStats, useRfps } from '@/modules/rfps'
@@ -21,40 +22,52 @@ export function HomePage() {
 function Hero() {
   return (
     <section className="border-b border-border">
-      <div className="mx-auto max-w-6xl px-6 py-24 md:py-36">
-        <span className="mb-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-          Canonical superset of DAOIP-5 · schema.org/Grant · CC0
-        </span>
-        <h1 className="mb-6 max-w-3xl text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-          The open index of web3
-          <br />
-          funding opportunities.
-        </h1>
-        <p className="mb-8 max-w-2xl text-lg text-foreground/70">
-          A canonical RFP object format, a public GraphQL API, signed operation-log provenance, and
-          governance-as-document review. Built on Powerhouse. CC0 schema. AGPL-3.0 code. Shipped as
-          public-goods infrastructure.
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/rfps"
-            className="inline-flex items-center gap-2 bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
-            Browse RFPs <ArrowRight className="size-4" strokeWidth={1.5} />
-          </Link>
-          {/* <Link
-            href="/submit"
-            className="inline-flex items-center gap-2 border border-border px-5 py-3 text-sm font-medium hover:border-foreground/60"
-          >
-            Submit an RFP
-          </Link> */}
-          <Link
-            href="/exports"
-            className="inline-flex items-center gap-1 px-2 py-3 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
-          >
-            Snapshots / RSS / IPFS <ArrowRight className="size-3" strokeWidth={1.5} />
-          </Link>
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-24 md:grid-cols-[1fr_20rem] md:py-36">
+        <div>
+          <span className="mb-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            Canonical superset of DAOIP-5 · schema.org/Grant · CC0
+          </span>
+          <h1 className="mb-6 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
+            The open index of web3
+            <br />
+            funding opportunities.
+          </h1>
+          <p className="mb-8 max-w-2xl text-lg text-foreground/70">
+            A canonical RFP object format, a public GraphQL API, signed operation-log provenance,
+            and governance-as-document review. Built on Powerhouse. CC0 schema. AGPL-3.0 code.
+            Shipped as public-goods infrastructure.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/rfps"
+              className="inline-flex items-center gap-2 bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Browse RFPs <ArrowRight className="size-4" strokeWidth={1.5} />
+            </Link>
+            {/* <Link
+              href="/submit"
+              className="inline-flex items-center gap-2 border border-border px-5 py-3 text-sm font-medium hover:border-foreground/60"
+            >
+              Submit an RFP
+            </Link> */}
+            <Link
+              href="/exports"
+              className="inline-flex items-center gap-1 px-2 py-3 font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              Snapshots / RSS / IPFS <ArrowRight className="size-3" strokeWidth={1.5} />
+            </Link>
+          </div>
+        </div>
+        <div className="relative hidden aspect-square w-full md:block">
+          <Image
+            src="/rfp-illustration.jpg"
+            alt="Hands holding an RFP document"
+            fill
+            sizes="(min-width: 768px) 320px, 0px"
+            priority
+            className="object-contain"
+          />
         </div>
       </div>
     </section>
